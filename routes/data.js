@@ -7,7 +7,6 @@ function isSupportedLocale(req, res, next) {
   var isSupported = locales.some(function (l) {
     return l == req.params.locale;
   });
-
   if (isSupported) next();
 }
 
