@@ -50,7 +50,8 @@ module.exports = function (grunt) {
     nodemon: {
       dev: {
         options: {
-          file: "app.js"
+          file: "app.js",
+          ignoredFiles: ["assets/**", ".tmp/**"]
         }
       }
     },
