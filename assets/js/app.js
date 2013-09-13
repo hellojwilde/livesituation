@@ -1,13 +1,17 @@
 App = Ember.Application.create();
 
 App.Router.map(function() {
-  this.resource('situation', { path: '/s/:situation_slug' });
+  this.resource('situation', { path: '/s/:locale' });
 });
 
 App.IndexRoute = Ember.Route.extend({
+  model: function () {
 
+  }
 });
 
-App.SituationIndexRoute = Ember.Route.extend({
-
+App.SituationRoute = Ember.Route.extend({
+  model: function() {
+    return $.getJSON("/data/en");
+  }
 });
