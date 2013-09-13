@@ -1,0 +1,7 @@
+{{#each row in view.content.children}}
+<tr>
+  {{#each cell in row.children}}
+  {{view App.ContentTextView tagName="td" contentBinding="cell"}}
+  {{/each}}
+</tr>
+{{/each}}

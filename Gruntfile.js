@@ -30,6 +30,7 @@ module.exports = function (grunt) {
             "assets/js/vendor/handlebars-1.0.0.js",
             "assets/js/vendor/ember-1.0.0.js",
             "assets/js/app.js",
+            "assets/js/content.js",
             ".tmp/templates.js"
           ],
           ".tmp/app.css": [

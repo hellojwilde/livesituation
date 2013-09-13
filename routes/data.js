@@ -33,9 +33,17 @@ function getSituationForHTML(html, callback) {
     children: []
   };
 
+  var section = [];
+  var ignoredSections = ["Table of Contents"];
+
   $("body").children().each(function () {
     var tagName = this[0].name;
     var el = $(this);
+    var inIgnoredSection = function () {
+      return ignoredSections.some(function (ig) {
+        return section[0] == ig || section[1] == ig;
+      });
+    };
 
     switch (tagName) {
       case "h1":
@@ -44,6 +52,14 @@ function getSituationForHTML(html, callback) {
 
       case "h2":
       case "h3":
+        if (tagName == "h2") {
+          section = [el.text()];
+        } else {
+          section[1] = el.text();
+        }
+
+        if (inIgnoredSection()) return;
+
         situation.children.push({
           type: (tagName == "h2") ? "heading" : "subheading",
           text: el.text()
@@ -52,6 +68,8 @@ function getSituationForHTML(html, callback) {
 
       case "ol":
       case "ul":
+        if (inIgnoredSection()) return;
+
         var last = situation.children[situation.children.length - 1];
         var children =
           el.find("li").map(function () {
@@ -72,6 +90,8 @@ function getSituationForHTML(html, callback) {
         break;
 
       case "table":
+        if (inIgnoredSection()) return;
+
         if (!situation.contributors.length) {
           el.find("tr").each(function () {
             var names = $(this).children().last().text().
@@ -111,6 +131,8 @@ function getSituationForHTML(html, callback) {
         }
 
         if (situation.children.length && el.text().length) {
+          if (inIgnoredSection()) return;
+
           situation.children.push({
             type: "paragraph",
             text: $(this).text()

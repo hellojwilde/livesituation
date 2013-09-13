@@ -1,0 +1,37 @@
+.app {
+  width: 45em;
+  margin: 0 auto;
+}
+
+header.app h1 {
+  font-family: georgia;
+  font-weight: normal;
+  font-style: italic;
+  text-transform: lowercase;
+  font-size: 1.5em;
+}
+
+header.app h1 a {
+  text-decoration: none;
+  color: #000;
+}
+
+.situation header {
+  border-bottom: 3px double #bbb;
+}
+
+.contributors {
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0;
+}
+
+.contributors li {
+  display: inline;
+}
+
+.contributors li:not(last-child):after {
+  content: ",";
+}

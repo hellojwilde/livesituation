@@ -1,4 +1,4 @@
-<section class="situation">
+<section class="situation app">
   <header>
     <h1>{{title}}</h1>
 
@@ -11,4 +11,8 @@
       {{summary}}
     </p>
   </header>
+
+  <section class="situation-content">
+    {{view App.ContentView contentBinding="children"}}
+  </section>
 </section>
