@@ -3,7 +3,7 @@ var fs = require('fs'),
     importer = require('../lib/importer');
 
 function isSupportedLocale(req, res, next) {
-  var locales = ["en"];
+  var locales = ["en", "es", "pt", "vi"];
   var isSupported = locales.some(function (l) {
     return l == req.params.locale;
   });

@@ -11,7 +11,7 @@ App.IndexRoute = Ember.Route.extend({
 });
 
 App.SituationRoute = Ember.Route.extend({
-  model: function() {
-    return $.getJSON("/data/en");
+  model: function(params) {
+    return $.getJSON("/data/" + params.locale);
   }
 });
