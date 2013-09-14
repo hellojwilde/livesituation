@@ -11,8 +11,11 @@ If you haven't already, [install node.js](https://github.com/joyent/node/wiki/In
 After that, head into your friendly terminal and type:
 
 ```
-npm install
+cd /path/to/livesituation
+npm install .
 ```
+
+(Replacing `/path/to/livesituation` with the path to your clone of livesituation, of course.)
 
 Finally, start up the development server:
 
