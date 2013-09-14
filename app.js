@@ -15,6 +15,8 @@ app.configure(function () {
   app.set('views', __dirname + '/views');
   app.set('view engine', 'hbs');
 
+  app.set('apppath', __dirname);
+
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(app.router);

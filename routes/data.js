@@ -1,154 +1,32 @@
 var fs = require('fs'),
     path = require('path'),
-    cheerio = require('cheerio');
+    cheerio = require('cheerio'),
+    importer = require('../lib/importer');
 
 function isSupportedLocale(req, res, next) {
   var locales = ["en"];
   var isSupported = locales.some(function (l) {
     return l == req.params.locale;
   });
-  if (isSupported) next();
-}
 
-function getSituationForLocale(locale, callback) {
-  var file = path.join(__dirname, '..', 'data', locale + '.html');
-  fs.readFile(file, 'utf8', function (err, html) {
-    if (err) {
-      callback(err, null);
-      return;
-    }
-
-    getSituationForHTML(html, callback);
-  });
-}
-
-function getSituationForHTML(html, callback) {
-  var $ = cheerio.load(html);
-
-  var situation = {
-    type: "situation",
-    title: null,
-    contributors: [],
-    summary: null,
-    children: []
-  };
-
-  var section = [];
-  var ignoredSections = ["Table of Contents"];
-
-  $("body").children().each(function () {
-    var tagName = this[0].name;
-    var el = $(this);
-    var inIgnoredSection = function () {
-      return ignoredSections.some(function (ig) {
-        return section[0] == ig || section[1] == ig;
-      });
-    };
-
-    switch (tagName) {
-      case "h1":
-        situation.title = el.text();
-        break;
-
-      case "h2":
-      case "h3":
-        if (tagName == "h2") {
-          section = [el.text()];
-        } else {
-          section[1] = el.text();
-        }
-
-        if (inIgnoredSection()) return;
-
-        situation.children.push({
-          type: (tagName == "h2") ? "heading" : "subheading",
-          text: el.text()
-        });
-        break;
-
-      case "ol":
-      case "ul":
-        if (inIgnoredSection()) return;
-
-        var last = situation.children[situation.children.length - 1];
-        var children =
-          el.find("li").map(function () {
-            return {
-              type: "list-item",
-              text: $(this).text()
-            };
-          });
-
-        if (last && last.type == "list") {
-          Array.prototype.push.apply(last.children, children);
-        } else {
-          situation.children.push({
-            type: "list",
-            children: children
-          });
-        }
-        break;
-
-      case "table":
-        if (inIgnoredSection()) return;
-
-        if (!situation.contributors.length) {
-          el.find("tr").each(function () {
-            var names = $(this).children().last().text().
-              split(/s*[,]\s*/).
-              filter(function (n) {
-                return n.length > 0 && n.indexOf("@") == -1;
-              });
-
-            Array.prototype.push.apply(situation.contributors, names);
-          });
-        } else {
-          situation.children.push({
-            type: "table",
-            children: el.find("tr").map(function () {
-              return {
-                type: "table-row",
-                children: $(this).find("td").map(function () {
-                  return {
-                    type: "table-cell",
-                    text: $(this).text()
-                  }
-                })
-              }
-            })
-          });
-        }
-        break;
-
-      case "p":
-        if (!situation.contributors.length) {
-          return;
-        }
-
-        if (!situation.summary) {
-          situation.summary = el.text();
-          return;
-        }
-
-        if (situation.children.length && el.text().length) {
-          if (inIgnoredSection()) return;
-
-          situation.children.push({
-            type: "paragraph",
-            text: $(this).text()
-          });
-        }
-        break;
-    }
-  });
-
-  callback(null, situation);
+  if (isSupported) {
+    next();
+  } else {
+    res.json({ err: "locale not supported" });
+  }
 }
 
 module.exports = function (app) {
   app.get('/data/:locale', isSupportedLocale, function (req, res) {
-    getSituationForLocale(req.params.locale, function (err, situation) {
-      res.json(err ? { error: err } : situation);
+    var file = path.join(__dirname, '..', 'data', locale + '.html');
+    fs.readFile(file, 'utf8', function (err, html) {
+      if (err) {
+        res.json({ err: "unable to load data" });
+      } else {
+        var def = importer.SituationGoogleDocsHTML;
+        var parser = new importer.SituationImporter(def);
+        res.json(parser.parse(html));
+      }
     });
   });
 }
