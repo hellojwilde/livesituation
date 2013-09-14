@@ -1,6 +1,7 @@
 {
   "name": "livesituation",
   "version": "0.0.1",
+  "description": "rethinking real-time incident coverage",
   "private": true,
   "scripts": {
     "start": "node app.js"
