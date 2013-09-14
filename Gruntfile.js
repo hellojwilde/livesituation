@@ -28,6 +28,7 @@ module.exports = function (grunt) {
           ".tmp/app.js":  [
             "assets/js/vendor/jquery-1.9.1.js",
             "assets/js/vendor/handlebars-1.0.0.js",
+            "assets/js/vendor/moment-2.2.1.js",
             "assets/js/vendor/ember-1.0.0.js",
             "assets/js/app.js",
             "assets/js/content.js",

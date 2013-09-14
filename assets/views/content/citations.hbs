@@ -1,0 +1,6 @@
+{{#each citation in view.content}}
+<cite>
+  <a {{bindAttr href="citation.href"}}>{{citation.title}}</a>
+  {{view App.TimeView contentBinding="citation.updated"}}
+</cite>
+{{/each}}

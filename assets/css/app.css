@@ -16,6 +16,10 @@ header.app h1 a {
   color: #000;
 }
 
+.situation {
+  position: relative;
+}
+
 .situation header {
   border-bottom: 3px double #bbb;
 }
@@ -34,4 +38,22 @@ header.app h1 a {
 
 .contributors li:not(last-child):after {
   content: ",";
+}
+
+.citations {
+  position: absolute;
+  left: 0;
+  margin-left: 45em;
+  padding-left: 1em;
+  width: 15em;
+  opacity: 0.2;
+}
+
+.text:hover .citations {
+  opacity: 1;
+}
+
+.citations cite {
+  display: block;
+  font-size: 0.8em;
 }
