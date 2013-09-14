@@ -4,6 +4,10 @@ App.Router.map(function() {
   this.resource('situation', { path: '/s/:locale' });
 });
 
+App.Router.reopen({
+  location: "history"
+});
+
 App.IndexRoute = Ember.Route.extend({
   model: function () {
 

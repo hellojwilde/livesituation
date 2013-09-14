@@ -35,5 +35,9 @@ app.get('/', function (req, res) {
   res.render("index");
 });
 
+app.get('/s/:locale', function (req, res) {
+  res.render("index");
+});
+
 app.listen(app.get('port'));
 console.log("livesituation running on " + app.get('port'));
