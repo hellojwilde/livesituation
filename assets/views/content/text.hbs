@@ -1,2 +1,2 @@
 {{view App.ContentCitationsView contentBinding="view.content.citations"}}
-{{{view.content.content}}}
+{{#each fragment in view.content.content}}{{{fragment.content}}}{{/each}}
