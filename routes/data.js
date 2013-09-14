@@ -1,6 +1,5 @@
 var fs = require('fs'),
     path = require('path'),
-    cheerio = require('cheerio'),
     importer = require('../lib/importer');
 
 function isSupportedLocale(req, res, next) {
@@ -18,14 +17,16 @@ function isSupportedLocale(req, res, next) {
 
 module.exports = function (app) {
   app.get('/data/:locale', isSupportedLocale, function (req, res) {
+    var locale = req.params.locale;
     var file = path.join(__dirname, '..', 'data', locale + '.html');
+
     fs.readFile(file, 'utf8', function (err, html) {
       if (err) {
         res.json({ err: "unable to load data" });
       } else {
         var def = importer.SituationGoogleDocsHTML;
         var parser = new importer.SituationImporter(def);
-        res.json(parser.parse(html));
+        res.json(parser.parse(html, ["Table of Contents"]));
       }
     });
   });
