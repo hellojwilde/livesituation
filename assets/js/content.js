@@ -1,54 +1,86 @@
-App.TimeView = Ember.View.extend({
-  tagName: "time",
-  attributeBindings: ['content:datetime'],
-  template: Ember.Handlebars.compile("{{view.pretty}}"),
+App.Decorator = Em.Object.extend({
+  decoration: function (name) {
+    var decoration = this._decorations[name];
+    if (!decoration) {
+      var className = Em.String.classify(name) + "Decoration";
+      this._decorations[name] = decoration = App.get(className).create();
+    }
+    return decoration;
+  },
 
-  pretty: function () {
-    return moment(this.get("content")).fromNow()
-  }.property("content")
+  decorate: function (fragment) {
+    return (fragment.decorations || []).reduce(function (prev, cur) {
+      return this.decoration(cur).wrap(prev);
+    }.bind(this), fragment.content);
+  }
 });
 
-App.ContentCitationsView = Ember.View.extend({
-  templateName: "content/citations",
-  tagName: "span",
-  classNames: ["citations"]
+App.Decoration = Em.Object.extend({
+  wrap: function (wrappable, content, data) {
+    return wrappable;
+  }
+})
+
+App.CitationDecoration = App.Decoration.extend({
+  wrap: function (wrappable, content, citations) {
+    var cited = "<span class='cited'>" + wrappable + "</span>";
+    var citations = "<span class='citations'>" + citations.join(" ") + "</span>";
+    return cited + citations;
+  }
 });
 
-App.ContentTextView = Ember.View.extend({
-  templateName: "content/text",
-  classNames: ["text"]
+App.LinkDecoration = App.Decoration.extend({
+  wrap: function (wrappable, content, attrs) {
+    return "<a href='" + (attrs.href || "#") + "'>" + wrappable + "</a>";
+  }
 });
 
-App.ContentHeadingView = App.ContentTextView.extend({ tagName: "h2" });
-App.ContentSubheadingView = App.ContentTextView.extend({ tagName: "h3" });
-App.ContentParagraphView = App.ContentTextView.extend({ tagName: "p" });
+App.TextContentView = Em.View.extend({
+  updated: function () {
+    this.rerender();
+  }.observes("content.content.@each"),
 
-App.ContentListView = Ember.View.extend({
+  render: function (buffer) {
+    var fragments = this.get("content.content");
+    var decorator = App.Decorator.create();
+
+    fragments.forEach(function (fragment) {
+      var decorated = decorator.decorate(fragment);
+      buffer.push(decorated);
+    }.bind(this));
+  }
+});
+
+App.HeadingContentView = App.TextContentView.extend({
+  tagName: "h2"
+});
+
+App.SubheadingContentView = App.TextContentView.extend({
+  tagName: "h3"
+});
+
+App.ParagraphContentView = App.TextContentView.extend({
+  tagName: "p"
+});
+
+App.ListContentView = Em.View.extend({
   tagName: "ul",
   templateName: "content/list"
 });
 
-App.ContentTableView = Ember.View.extend({
+App.TableContentView = Em.View.extend({
   tagName: "table",
   templateName: "content/table"
 });
 
-App.ContentViewBindings = {
-  heading: App.ContentHeadingView,
-  subheading: App.ContentSubheadingView,
-  paragraph: App.ContentParagraphView,
-  list: App.ContentListView,
-  table: App.ContentTableView,
+App.ContentView = Em.CollectionView.extend({
+  defaultChildViewClass: App.TextContentView,
 
-  // In the event that we're served an element that we can't deal with.
-  default: App.ContentParagraphView
-};
-
-App.ContentView = Ember.CollectionView.extend({
   createChildView: function (viewClass, attrs) {
-    viewClass = App.ContentViewBindings[attrs.content.type] ||
-                App.ContentViewBindings.default;
+    var viewClassName = Em.String.classify(attrs.content.type) + "ContentView";
+    var defaultChildViewClass = this.get("defaultChildViewClass");
 
+    viewClass = App.getWithDefault(viewClassName, defaultChildViewClass);
     return this._super(viewClass, attrs);
   }
 });
