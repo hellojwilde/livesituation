@@ -10,7 +10,7 @@ App.Router.reopen({
 
 App.IndexRoute = Ember.Route.extend({
   model: function () {
-
+    return $.getJSON("/data");
   }
 });
 

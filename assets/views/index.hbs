@@ -1,3 +1,5 @@
 <ul>
-  <li>{{#link-to 'situation' 'en'}}Boston Situation Summary{{/link-to}}
+  {{#each}}
+  <li>{{#link-to 'situation' locale}}{{title}}{{/link-to}}
+  {{/each}}
 </ul>
