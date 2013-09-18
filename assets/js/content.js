@@ -7,7 +7,7 @@ App.TextContentView = Em.View.extend({
     var fragments = this.get("content.content");
     var decorator = App.Decorator.create();
 
-    fragments.forEach(function (fragment) {
+    (fragments || []).forEach(function (fragment) {
       var decorated = decorator.decorate(fragment);
       buffer.push(decorated);
     }.bind(this));
@@ -42,6 +42,7 @@ App.ContentView = Em.CollectionView.extend({
   createChildView: function (viewClass, attrs) {
     var viewClassName = Em.String.classify(attrs.content.type) + "ContentView";
     var defaultChildViewClass = this.get("defaultChildViewClass");
+    console.log(App.get(viewClassName))
 
     viewClass = App.getWithDefault(viewClassName, defaultChildViewClass);
     return this._super(viewClass, attrs);

@@ -1,4 +1,6 @@
 App.Decorator = Em.Object.extend({
+  _decorations: {},
+
   decoration: function (name) {
     var decoration = this._decorations[name];
     if (!decoration) {
@@ -9,9 +11,10 @@ App.Decorator = Em.Object.extend({
   },
 
   decorate: function (fragment) {
+    var content = Handlebars.Utils.escapeExpression(fragment.content);
     return (fragment.decorations || []).reduce(function (prev, cur) {
-      return this.decoration(cur).wrap(prev);
-    }.bind(this), fragment.content);
+      return this.decoration(cur.type).wrap(prev, content, cur.data);
+    }.bind(this), content);
   }
 });
 
@@ -21,7 +24,7 @@ App.Decoration = Em.Object.extend({
   }
 })
 
-App.CitationDecoration = App.Decoration.extend({
+App.CiteDecoration = App.Decoration.extend({
   wrap: function (wrappable, content, citations) {
     var cited = "<span class='cited'>" + wrappable + "</span>";
     var citations = "<span class='citations'>" + citations.join(" ") + "</span>";

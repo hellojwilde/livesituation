@@ -55,14 +55,12 @@ header.app h1 a {
   margin-left: 45em;
   padding-left: 1em;
   width: 15em;
-  opacity: 0.2;
 }
 
-.text:hover .citations {
-  opacity: 1;
-}
+.cited:hover,
+.cited:hover + .citations,
+.citations:hover,
+.citations:hover + .cited {
+  background: yellow;
 
-.citations cite {
-  display: block;
-  font-size: 0.8em;
 }
