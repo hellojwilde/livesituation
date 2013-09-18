@@ -12,7 +12,8 @@
     "cheerio": "0.12.2",
     "moment": "~2.2.1",
     "bleach.js": "0.0.1",
-    "entities": "~0.3.0"
+    "entities": "~0.3.0",
+    "underscore": "~1.5.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

@@ -42,7 +42,6 @@ App.ContentView = Em.CollectionView.extend({
   createChildView: function (viewClass, attrs) {
     var viewClassName = Em.String.classify(attrs.content.type) + "ContentView";
     var defaultChildViewClass = this.get("defaultChildViewClass");
-    console.log(App.get(viewClassName))
 
     viewClass = App.getWithDefault(viewClassName, defaultChildViewClass);
     return this._super(viewClass, attrs);

@@ -24,7 +24,7 @@ App.Decoration = Em.Object.extend({
   }
 })
 
-App.CiteDecoration = App.Decoration.extend({
+App.CitationsDecoration = App.Decoration.extend({
   wrap: function (wrappable, content, citations) {
     var cited = "<span class='cited'>" + wrappable + "</span>";
     var citations = "<span class='citations'>" + citations.join(" ") + "</span>";
