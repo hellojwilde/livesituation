@@ -1,7 +1,0 @@
-{{#each row in view.content.content}}
-<tr>
-  {{#each cell in row.content}}
-  {{view App.TextContentView tagName="td" contentBinding="cell"}}
-  {{/each}}
-</tr>
-{{/each}}
