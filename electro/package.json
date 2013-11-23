@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "description": "operational transforms for json",
   "contributors": [
-    { "name": "Jonathan Wilde", "email": "hello@jwilde.me" }
+    {
+      "name": "Jonathan Wilde",
+      "email": "hello@jwilde.me"
+    }
   ],
   "devDependencies": {
-    "grunt": "0.4.x",
+    "grunt": "~0.4.2",
+    "mocha": "~1.14.0",
     "grunt-traceur": "0.0.1",
-    "mocha": "1.14.x"
+    "grunt-mocha-test": "~0.7.0",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-contrib-watch": "~0.5.3"
   }
 }

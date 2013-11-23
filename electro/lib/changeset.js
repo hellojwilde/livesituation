@@ -1,71 +1,60 @@
-(function (exports, undefined) {
-  "use strict";
-
-  function cloneObject(aObject) {
-    var clone = {}, item;
-    for (var key in aObject) {
-      item = aObject[key];
-      if (typeof item == "object") clone[key] = cloneObject(item);
-      else clone[key] = item;
-    }
-    return clone;
+class Revision {
+  constructor(sequenceId, data) {
+    this._sequenceId = sequenceId || 1;
+    this._data = data || {};
   }
 
-  class DocumentRevision {
-    constructor(aData, aRevision) {
-      this._data = aData || {};
-      this._revision = aRevision || 1;
-    }
+  get sequenceId() { return this._sequenceId; }
+  get data() { return this._data; }
+}
 
-    get data() { return this._data; }
-    get revision() { return this._revision; }
+class Changeset {
+  constructor (baseSequenceId, changes) {
+    this._baseSequenceId = aBaseRevision;
+    this._changes = changes || [];
+    if (!this._changes.every(Change.isValid))
+      throw new Error("Changeset: change in set is invalid");
   }
 
-  class Changeset {
-    constructor (aBaseRevision, aChanges) {
-      this._baseRevision = aBaseRevision;
-      this._changes = aChanges || [];
-    }
+  get baseSequenceId() { return this._baseSequenceId; }
+  get changes() { return this._changes; }
 
-    get baseRevision() { return this._baseRevision; }
-    get changes() { return this._changes; }
+  push(change) {
+    if (!Change.isValid(change))
+      throw new Error("Changeset.push: change is invalid");
 
-    push(...aChange) {
-      this._changes.push(aChange);
-      return this;
-    }
-
-    concat(aChangeset) {
-      return new Changeset(this.changes.concat(aChangeset.changes));
-    }
-    
-    apply(aDocument) {
-      if (aDocument.revision != this.baseRevision)
-        throw new Error("Changeset.apply: revision mismatch");
-
-      var cloneWithChanges = this.changes.reduce((aData, aChange) =>
-        Change.mutate(aChange, aData), cloneObject(aDocument.data));
-
-      return new Document(cloneWithChanges, aDocument.revision + 1)
-    }
-
-    invert() {
-      return new Changeset(this.changes.reduceRight(
-        (inverted, change) => inverted.concat(Change.invert(cur)), []));
-    }
-
-    transform(aChangeset) {
-      var transformByChangeset = (aToTransform) => 
-        aChangeset.changes.reduce((aTransforming, aChange) => 
-          Change.transform(aChange, aTransforming), aToTransform);
-
-      return new Changeset(this.changes.map(transformByChangeset));
-    }  
+    this._changes.push(change);
   }
 
-  Changeset.fromDocumentRevision = (aDocumentRevision) => 
-    new Changeset(aDocumentRevision.revision + 1);
+  concat(changeset) {
+    return new Changeset(this.changes.concat(changeset.changes));
+  }
+  
+  apply(revision) {
+    if (revision.sequenceId != this.baseSequenceId) {
+      throw new Error("Changeset.apply: sequence IDs do not match on " +
+                      "document revision and changeset.");
+    }
 
-  exports.DocumentRevision = DocumentRevision;
-  exports.Changeset = Changeset;
-}(window));
+    var cloneWithChanges = this.changes.reduce((data, change) =>
+      Change.mutate(change, data), Util.cloneObject(revision.data));
+
+    return new Revision(cloneWithChanges, revision.sequenceId + 1)
+  }
+
+  invert() {
+    return new Changeset(this.changes.reduceRight(
+      (inverted, change) => inverted.concat(Change.invert(change)), []));
+  }
+
+  transform(changeset) {
+    var transformByChangeset = (toTransform) => 
+      changeset.changes.reduce((transforming, change) => 
+        Change.transform(change, transforming), toTransform);
+
+    return new Changeset(this.changes.map(transformByChangeset));
+  }  
+}
+
+Changeset.fromRevision = (revision) => 
+  new Changeset(revision.sequenceId + 1);
