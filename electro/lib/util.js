@@ -1,4 +1,4 @@
-var Util = {
+module.exports = {
   cloneObject: function (aObject) {
     var clone = {}, item;
     for (var key in aObject) {
@@ -9,5 +9,3 @@ var Util = {
     return clone;
   }
 };
-
-exports.Util = Util;

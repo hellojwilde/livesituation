@@ -1,4 +1,4 @@
-var {Place} = require("./place");
+var Place = require("./place");
 
 class Change {
   constructor(op, place, ...args) {

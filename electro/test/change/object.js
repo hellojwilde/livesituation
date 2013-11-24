@@ -1,4 +1,4 @@
-var {Place} = require("../../lib/place");
+var Place = require("../../lib/place");
 var {ObjectChange} = require("../../lib/change");
 var assert = require("assert");
 var testing = require("../testing");

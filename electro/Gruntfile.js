@@ -6,24 +6,9 @@ module.exports = function (grunt) {
         files: { "bin/": ["lib/**/*.js", "test/**/*.js"] }
       }
     },
-    uglify: {
-      options: {
-        banner: "/*! <%= pkg.name %> v<%= pkg.version %>, " +
-                "built: <%= grunt.template.today('yyyy-mm-dd') %> */\n",
-        wrap: "Electro"
-      },
-      dev: {
-        options: {
-          beautify: true,
-          mangle: false
-        },
+    browserify: {
+      build: {
         files: { "bin/electro.js": ["bin/lib/**/*.js"] }
-      },
-      dist: {
-        options: {
-          report: "min"
-        },
-        files: { "bin/electro.min.js": ["bin/lib/**/*.js"] }
       }
     },
     jshint: {
@@ -46,16 +31,24 @@ module.exports = function (grunt) {
         files: ["lib/**/*.js", "test/**/*.js"],
         tasks: ["test"]
       }
+    },
+    uglify: {
+      dist: {
+        files: { "bin/electro.min.js": ["bin/electro.js"] }
+      }
     }
   });
 
   grunt.loadNpmTasks("grunt-traceur");
-  grunt.loadNpmTasks("grunt-contrib-uglify");
+  grunt.loadNpmTasks("grunt-browserify")
   grunt.loadNpmTasks("grunt-contrib-jshint");
   grunt.loadNpmTasks("grunt-mocha-test");
   grunt.loadNpmTasks("grunt-contrib-watch");
+  grunt.loadNpmTasks("grunt-contrib-uglify");
 
-  grunt.registerTask("default", ["traceur", "uglify:dev"]);
-  grunt.registerTask("test", ["default", "jshint", "mochaTest"]);
-  grunt.registerTask("dist", ["default", "uglify:dist"]);
+  grunt.registerTask("build", ["traceur", "browserify"]);
+  grunt.registerTask("test", ["build", "jshint", "mochaTest"]);
+  grunt.registerTask("dist", ["build", "uglify"]);
+  
+  grunt.registerTask("default", ["build"]);
 };

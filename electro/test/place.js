@@ -1,4 +1,4 @@
-var {Place} = require("../lib/place");
+var Place = require("../lib/place");
 var assert = require("assert");
 
 describe("Place", function () {

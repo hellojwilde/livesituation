@@ -8,4 +8,4 @@ class Revision {
   get data() { return this._data; }
 }
 
-exports.Revision = Revision;
+module.exports = Revision;

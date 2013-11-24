@@ -1,6 +1,6 @@
-var {Util} = require("./util");
-var {Change} = require("./change.js");
-var {Revision} = require("./revision");
+var Util = require("./util");
+var Revision = require("./revision");
+var {Change} = require("./change");
 
 class Changeset {
   constructor (baseSequenceId, changes) {
@@ -63,4 +63,4 @@ class Changeset {
 Changeset.fromRevision = (revision) => 
   new Changeset(revision.sequenceId + 1);
 
-exports.Changeset = Changeset;
+module.exports = Changeset;

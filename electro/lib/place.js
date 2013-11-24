@@ -42,4 +42,4 @@ class Place {
   }
 }
 
-exports.Place = Place;
+module.exports = Place;
