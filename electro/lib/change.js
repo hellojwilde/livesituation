@@ -11,8 +11,8 @@ class Change {
   get place() { return this._place; }
   get args() { return this._args; }
 
-  get type() { throw new Error("Change.getType: not implemented."); }
-  get inverted() { throw new Error("Change.getInverted: not implemented."); }
+  get type() { throw new Error("Change.get:type: not implemented."); }
+  get inverted() { throw new Error("Change.get:inverted: not implemented."); }
 
   relocate(toRelocate) { 
     throw new Error("Change.relocate: not implemented."); 
@@ -44,6 +44,22 @@ class StringChange extends Change {
       union += (this.op == "remove" ? -1 : 1) * str.length;
     }
     return this.place.parent.concat(new Place([union]), branch);
+  }
+
+  mutate(toMutate) {
+    var str = this.place.parent.getValueIn(toMutate);
+    var offset = this.place.offset;
+    switch (this.op) {
+      case "insert":
+        str = str.substr(0, offset) + this.args[0] + str.substr(offset);
+        break;
+      case "remove":
+        str = str.substr(0, offset) + str.substr(offset + this.args[0].length);
+        break;
+    }
+    var parent = this.place.parent.parent;
+    parent.getValueIn(toMutate)[this.place.parent.offset] = str;
+    return toMutate;
   }
 }
 

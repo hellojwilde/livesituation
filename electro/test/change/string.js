@@ -17,7 +17,7 @@ describe("StringChange", function () {
       assert.equal(change.inverted.op, "remove");
     });
 
-    it("should satisfy change = invert(invert(change))", function () {
+    it("should satisfy change = i(i(change))", function () {
       var insert = new StringChange("insert", new Place(["k", 0]), "i");
       var remove = new StringChange("remove", new Place(["k", 0]), "i");
 
@@ -48,6 +48,26 @@ describe("StringChange", function () {
 
       assert(insert.relocate(toRelocate).isEqualTo(toRelocate), "insert");
       assert(remove.relocate(toRelocate).isEqualTo(toRelocate), "remove")
+    });
+  });
+
+  describe("#mutate", function () {
+    it("should insert a string at the location", function () {
+      var insert = new StringChange("insert", new Place(["str", 2]), "i");
+      var ctx = { str: "hello" };
+      assert.deepEqual(insert.mutate(ctx), { str: "heillo" });
+    });
+
+    it("should remove a string at the location", function () {
+      var remove = new StringChange("remove", new Place(["str", 1]), "ooo");
+      var ctx = { str: "wooooot" };
+      assert.deepEqual(remove.mutate(ctx), { str: "woot" });
+    });
+
+    it("should satisfy data = m(i(change), m(change, data))", function () {
+      var orig = new StringChange("insert", new Place(["str", 2]), "i");
+      var ctx = { str: "hello" };
+      assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), {str: "hello"});
     });
   });
 });
