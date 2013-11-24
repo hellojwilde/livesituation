@@ -175,6 +175,7 @@ class ObjectChange extends Change {
   }
 }
 
+exports.Change = Change;
 exports.StringChange = StringChange;
 exports.ArrayChange = ArrayChange;
 exports.ObjectChange = ObjectChange;

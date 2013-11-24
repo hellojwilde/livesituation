@@ -152,11 +152,4 @@ describe("Place", function () {
       assert(place.isEqualTo(place.parent.concat(child)));
     })
   });
-
-  describe(":fromFragments", function () {
-    it("should assemble array fragments", function () {
-      assert(Place.fromFragments(new Place([1]), new Place([2])).isEqualTo(new Place([1, 2])));
-      assert(Place.fromFragments(new Place([1, 2]), new Place([2])).isEqualTo(new Place([1, 2, 2])));
-    });
-  });
 });

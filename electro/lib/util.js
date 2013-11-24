@@ -10,3 +10,4 @@ var Util = {
   }
 };
 
+exports.Util = Util;
