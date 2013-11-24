@@ -36,4 +36,23 @@ describe("ObjectChange", function () {
       testing.assertChangeEqual(replace, replace.inverted.inverted, "replace");
     });
   });
+
+  describe("#relocate", function () {
+    it("should invalidate children", function () {
+      var insert = new ObjectChange("insert", new Place(["k", "j"]), "i");
+      var toRelocate = new Place(["k", "j", 1]);
+      var anotherToRelocate = new Place(["k", "j", "l", "woot"]);
+
+      assert.equal(insert.relocate(toRelocate), null);
+      assert.equal(insert.relocate(anotherToRelocate), null);
+    });
+
+    it("should not invalidate same reference or other branches", function () {
+      var insert = new ObjectChange("insert", new Place(["k", "j"]), "i");
+      var toRelocate = new Place(["k", "j"]);
+      var anotherToRelocate = new Place(["b", "j", "l", "woot"]);
+      assert(insert.relocate(toRelocate).isEqualTo(toRelocate));
+      assert(insert.relocate(anotherToRelocate).isEqualTo(anotherToRelocate));
+    });
+  });
 });

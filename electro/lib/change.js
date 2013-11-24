@@ -38,15 +38,14 @@ class StringChange extends Change {
 
   relocate(toRelocate) {
     var [union, branch] = this.place.getBranch(toRelocate);
-    if (!union) return toRelocate;
-    if (union > this.place.offset) {
+    if (union === null) return toRelocate;
+    if (union >= this.place.offset) {
       var [str] = this.args;
       union += (this.op == "remove" ? -1 : 1) * str.length;
     }
     return this.place.parent.concat(new Place([union]), branch);
   }
 }
-exports.StringChange = StringChange;
 
 class ArrayChange extends Change {
   get type() { return "array"; }
@@ -71,27 +70,29 @@ class ArrayChange extends Change {
 
   relocate(toRelocate) {
     var [union, branch] = this.place.getBranch(toRelocate);
-    if (!union) return toRelocate;
     switch (this.op) {
       case "insert":
       case "remove":
-        if (union > this.path.offset) {
+        if (union === null) return toRelocate;
+        if (union >= this.place.offset) {
           union += (this.op == "remove" ? -1 : 1);
         }
         break;
       case "replace":
-        return null;
+        if (union === null) return toRelocate;
+        if (!branch.isRoot) return null;
         break;
       case "move":
+        if (!this.place.parent.isAncestorOf(toRelocate)) return toRelocate;
         var [newOffset] = this.args, offset = this.place.offset;
+        union = toRelocate.offset;
         if (newOffset > offset && union > offset && union <= newOffset) union--;
         if (newOffset < offset && union > newOffset && union <= offset) union++;
         break;
     }
-    return this.place.parent.concat(new Place(union), branch);
+    return this.place.parent.concat(new Place([union]), branch);
   }
 }
-exports.ArrayChange = ArrayChange;
 
 class ObjectChange extends Change {
   get type() { return "object"; }
@@ -111,7 +112,10 @@ class ObjectChange extends Change {
   }
 
   relocate(toRelocate) {
-    if (this.place.isAncestorOf(toRelocate)) return null;
+    return this.place.isAncestorOf(toRelocate) ? null : toRelocate;
   }
 }
+
+exports.StringChange = StringChange;
+exports.ArrayChange = ArrayChange;
 exports.ObjectChange = ObjectChange;

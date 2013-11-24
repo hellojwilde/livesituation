@@ -25,4 +25,29 @@ describe("StringChange", function () {
       testing.assertChangeEqual(remove, remove.inverted.inverted, "remove");
     });
   });
+
+  describe("#relocate", function () {
+    it("should nudge reference to the place forward on insert", function () {
+      var toRelocate = new Place(["k", 5]);
+      var expectedRelocation = new Place(["k", 7]);
+      var change = new StringChange("insert", toRelocate, "hi");
+      assert(change.relocate(toRelocate).isEqualTo(expectedRelocation));
+    });
+
+    it("should nudge reference to the place back on remove", function () {
+      var toRelocate = new Place(["k", 5]);
+      var expectedRelocation = new Place(["k", 3]);
+      var change = new StringChange("remove", toRelocate, "hi");
+      assert(change.relocate(toRelocate).isEqualTo(expectedRelocation));
+    });
+
+    it("should not affect string before an operation", function () {
+      var toRelocate = new Place(["k", 0]);
+      var insert = new StringChange("insert", new Place(["k", 5]), "i");
+      var remove = new StringChange("remove", new Place(["k", 5]), "i");
+
+      assert(insert.relocate(toRelocate).isEqualTo(toRelocate), "insert");
+      assert(remove.relocate(toRelocate).isEqualTo(toRelocate), "remove")
+    });
+  });
 });
