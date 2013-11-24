@@ -1,137 +1,117 @@
-var Change = {
-  types: {},
+var {Place} = require("./place");
 
-  isValid: function (change) {
-    return this.types[change.type] != undefined &&
-           this.types[change.type].isValid(change);
-  },
-
-  invert: function (change) {
-    return this.types[change.type].invert(change);
-  },
-
-  relocate: function (change, toRelocate) {
-    if (Place.isAncestorOf(change.place, toRelocate)) {
-      return toRelocate;
-    }
-
-    return this.types[change.type].relocate(change, toRelocate);
+class Change {
+  constructor(op, place, ...args) {
+    this._op = op;
+    this._place = place;
+    this._args = args;
   }
-};
 
-Change.types.string = {
-  ops: ["insert", "remove"],
+  get op() { return this._op; }
+  get place() { return this._place; }
+  get args() { return this._args; }
 
-  isValid: function (change) {
-    return this.ops.indexOf(change.op) !== -1;
-  },
+  get type() { throw new Error("Change.getType: not implemented."); }
+  get inverted() { throw new Error("Change.getInverted: not implemented."); }
 
-  invert: function (change) {
-    return {
-      type: change.type,
-      op: (change.op == "insert") ? "remove" : "insert",
-      place: change.place,
-      val: change.val
-    }
-  },
-
-  relocate: function (change, toRelocate) {
-    var offset = Place.getHere(change.place);
-    var parent = Place.getParent(change.place);
-    var [relocating, later] = Place.getBranch(change.place, toRelocate);
-
-    if (relocating > offset) {
-      relocating += (change.op == "remove" ? -1 : 1) * change.val.length;
-    }
-
-    return Place.fromFragments(parent, relocating, later);
+  relocate(toRelocate) { 
+    throw new Error("Change.relocate: not implemented."); 
   }
-};
 
-Change.types.object = {
-  ops: ["insert", "remove", "replace"],
+  mutate(toMutate) { 
+    throw new Error("Change.mutate: not implemented."); 
+  }
 
-  isValid: function (change) {
-    return this.ops.indexOf(change.op) !== -1;
-  },
+  transform(toTransform) {
+    var relocated = this.relocate(toTransform.place);
+    var constr = toTransform.constructor;
+    return new constr(toTransform.op, relocated, ...toTransform.args);
+  }
+}
 
-  invert: function (change) {
-    var op = { type: change.type, place: change.place };
-    switch (change.op) {
+class StringChange extends Change {
+  get type() { return "string"; }
+  get inverted() {
+    var op = (this.op == "insert") ? "remove" : "insert";
+    return new StringChange(op, this.place, ...this.args)
+  }
+
+  relocate(toRelocate) {
+    var [union, branch] = this.place.getBranch(toRelocate);
+    if (!union) return toRelocate;
+    if (union > this.place.offset) {
+      var [str] = this.args;
+      union += (this.op == "remove" ? -1 : 1) * str.length;
+    }
+    return this.place.parent.concat(new Place([union]), branch);
+  }
+}
+exports.StringChange = StringChange;
+
+class ArrayChange extends Change {
+  get type() { return "array"; }
+  get inverted() {
+    var op = this.op, place = this.place, args = this.args;
+    switch (this.op) {
       case "insert":
       case "remove":
-        op.op = (change.op == "insert") ? "remove" : "insert";
-        op.val = change.val;
+        op = (this.op == "insert") ? "remove" : "insert";
         break;
       case "replace":
-        op.op = change.op;
-        op.before = change.after;
-        op.after = change.before;
-        break;
-    }
-    return op;
-  },
-
-  relocate: function (change, toRelocate) {
-    return null;
-  }
-};
-
-Change.types.array = {
-  ops: ["insert", "remove", "replace", "move"],
-
-  isValid: function (change) {
-    return this.ops.indexOf(change.op) !== -1;
-  },
-
-  invert: function (change) {
-    var op = { type: change.type, place: change.place };
-    switch (change.op) {
-      case "insert":
-      case "remove":
-        op.op = (change.op == "insert") ? "remove" : "insert";
-        op.val = change.val;
-        break;
-      case "replace":
-        op.op = change.op;
-        op.before = change.after;
-        op.after = change.before;
+        var [before, after] = this.args;
+        args = [after, before];
         break;
       case "move":
-        var parent = Place.getParent(change.place);
-        var offset = Place.getHere(change.place);
-        op.newOffset = offset;
-        op.place = Place.fromFragments(parent, change.newOffset);
+        args = [this.place.offset];
+        place = this.place.parent.concat(new Place([this.args[0]]));
         break;
     }
-    return op;
-  },
+    return new ArrayChange(op, place, ...args);
+  }
 
-  relocate: function (change, toRelocate) {
-    var offset = Place.getHere(change.place);
-    var parent = Place.getParent(change.place);
-    var [relocating, later] = Place.getBranch(change.place, toRelocate);
-    switch (change.op) {
+  relocate(toRelocate) {
+    var [union, branch] = this.place.getBranch(toRelocate);
+    if (!union) return toRelocate;
+    switch (this.op) {
       case "insert":
       case "remove":
-        if (relocating > offset) {
-          relocating += (change.op == "remove" ? -1 : 1);
+        if (union > this.path.offset) {
+          union += (this.op == "remove" ? -1 : 1);
         }
         break;
       case "replace":
         return null;
         break;
       case "move":
-        if (change.newOffset > offset && relocating > offset 
-          && relocating <= change.newOffset) {
-          relocating--;
-        }
-        if (change.newOffset < offset && relocating > change.newOffset 
-          && relocating <= offset) {
-          relocating++;
-        }
+        var [newOffset] = this.args, offset = this.place.offset;
+        if (newOffset > offset && union > offset && union <= newOffset) union--;
+        if (newOffset < offset && union > newOffset && union <= offset) union++;
         break;
     }
-    return Place.fromFragments(parent, relocating, later);
+    return this.place.parent.concat(new Place(union), branch);
   }
-};
+}
+exports.ArrayChange = ArrayChange;
+
+class ObjectChange extends Change {
+  get type() { return "object"; }
+  get inverted() {
+    var op = this.op, args = this.args;
+    switch (this.op) {
+      case "insert":
+      case "remove":
+        op = (this.op == "insert") ? "remove" : "insert";
+        break;
+      case "replace":
+        var [before, after] = this.args;
+        args = [after, before];
+        break;
+    }
+    return new ObjectChange(op, this.place, ...args);
+  }
+
+  relocate(toRelocate) {
+    if (this.place.isAncestorOf(toRelocate)) return null;
+  }
+}
+exports.ObjectChange = ObjectChange;
