@@ -1,7 +1,7 @@
-var {Place} = require("../../lib/place.js");
-var {ArrayChange} = require("../../lib/change.js");
+var {Place} = require("../../lib/place");
+var {ArrayChange} = require("../../lib/change");
 var assert = require("assert");
-var testing = require("../testing.js");
+var testing = require("../testing");
 
 describe("ArrayChange", function () {
   describe("-type", function () {

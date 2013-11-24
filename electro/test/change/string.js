@@ -1,7 +1,7 @@
-var {Place} = require("../../lib/place.js");
-var {StringChange} = require("../../lib/change.js");
+var {Place} = require("../../lib/place");
+var {StringChange} = require("../../lib/change");
 var assert = require("assert");
-var testing = require("../testing.js");
+var testing = require("../testing");
 
 describe("StringChange", function () {
   describe("-type", function () {
