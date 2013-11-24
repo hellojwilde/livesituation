@@ -175,7 +175,9 @@ class ObjectChange extends Change {
   }
 }
 
-exports.Change = Change;
-exports.StringChange = StringChange;
-exports.ArrayChange = ArrayChange;
-exports.ObjectChange = ObjectChange;
+module.exports = {
+  Change: Change,
+  StringChange: StringChange,
+  ArrayChange: ArrayChange,
+  ObjectChange: ObjectChange
+};
