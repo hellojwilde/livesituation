@@ -119,4 +119,60 @@ describe("ArrayChange", function () {
       });
     });
   });
+
+  describe("#mutate", function () {
+    describe("insert/remove", function () {
+      it("should insert at appropriate location", function () {
+        var insert = new ArrayChange("insert", new Place([1]), 2);
+        var ctx = [1, 3, 4];
+        assert.deepEqual(insert.mutate(ctx), [1, 2, 3, 4]);
+      });
+
+      it("should remove from appropriate location", function () {
+        var remove = new ArrayChange("remove", new Place([3, 0]), 4);
+        var ctx = [1, 3, 4, [4, 5]];
+        assert.deepEqual(remove.mutate(ctx), [1, 3, 4, [5]]);
+      });
+
+      it("should satisfy data = m(i(change), m(change, data))", function () {
+        var orig = new ArrayChange("insert", new Place([1]), 2);
+        var ctx = [1, 3, 4];
+        assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), [1, 3, 4]);
+      });
+    });
+
+    describe("replace", function () {
+      it("should replace at expected location", function () {
+        var replace = new ArrayChange("replace", new Place([1]), "w", "o");
+        var ctx = ["w", "w", "o", "t"];
+        assert.deepEqual(replace.mutate(ctx), ["w", "o", "o", "t"]);
+      });
+
+      it("should satisfy data = m(i(change), m(change, data))", function () {
+        var orig = new ArrayChange("replace", new Place([1]), "w", "o");
+        var ctx = ["w", "w", "o", "t"];
+        assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), ["w", "w", "o", "t"]);
+      });
+    });
+
+    describe("move", function () {
+      it("should move downward at expected locations", function () {
+        var move = new ArrayChange("move", new Place([0]), 3);
+        var ctx = [1, 2, 3, 4, 5];
+        assert.deepEqual(move.mutate(ctx), [2, 3, 4, 1, 5]);
+      });
+
+      it("should move upward at expected locations", function () {
+        var move = new ArrayChange("move", new Place([4]), 0);
+        var ctx = [1, 2, 3, 4, 5];
+        assert.deepEqual(move.mutate(ctx), [5, 1, 2, 3, 4]);
+      });
+
+      it("should satisfy data = m(i(change), m(change, data))", function () {
+        var orig = new ArrayChange("move", new Place([4]), 0);
+        var ctx = [1, 2, 3, 4, 5];
+        assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), [1, 2, 3, 4, 5]);
+      });
+    });
+  });
 });

@@ -55,4 +55,20 @@ describe("ObjectChange", function () {
       assert(insert.relocate(anotherToRelocate).isEqualTo(anotherToRelocate));
     });
   });
+
+  describe("#mutate", function () {
+    it("should remove the relevant element", function () {
+      var remove = new ObjectChange("remove", new Place(["k"]), "w");
+      var ctx = {"k": "w", "h": "t"};
+      assert.deepEqual(remove.mutate(ctx), {"h":"t"});
+    });
+
+    it("should set the relevant element", function () {
+      var insert = new ObjectChange("insert", new Place(["k"]), "w");
+      var replace = new ObjectChange("replace", new Place(["j", "l"]), "i", "f");
+      var ctx = {"j": {"l": "i"}};
+      assert.deepEqual(insert.mutate(ctx), {"j": {"l": "i"}, "k": "w"});
+      assert.deepEqual(replace.mutate(ctx), {"j": {"l": "f"}, "k": "w"});
+    });
+  });
 });

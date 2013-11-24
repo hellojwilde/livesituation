@@ -33,7 +33,7 @@ class StringChange extends Change {
   get type() { return "string"; }
   get inverted() {
     var op = (this.op == "insert") ? "remove" : "insert";
-    return new StringChange(op, this.place, ...this.args)
+    return new StringChange(op, this.place, ...this.args);
   }
 
   relocate(toRelocate) {
@@ -108,6 +108,30 @@ class ArrayChange extends Change {
     }
     return this.place.parent.concat(new Place([union]), branch);
   }
+
+  mutate(toMutate) {
+    var ctx = this.place.parent.getValueIn(toMutate);
+    var offset = this.place.offset;
+    switch (this.op) {
+      case "insert":
+        var [insertion] = this.args;
+        ctx.splice(offset, 0, insertion);
+        break;
+      case "remove":
+        ctx.splice(offset, 1);
+        break;
+      case "replace":
+        var [, after] = this.args;
+        ctx[offset] = after;
+        break;
+      case "move":
+        var [newOffset] = this.args;
+        var [existing] = ctx.splice(offset, 1);
+        ctx.splice(newOffset, 0, existing);
+        break;
+    }
+    return toMutate;
+  }
 }
 
 class ObjectChange extends Change {
@@ -129,6 +153,25 @@ class ObjectChange extends Change {
 
   relocate(toRelocate) {
     return this.place.isAncestorOf(toRelocate) ? null : toRelocate;
+  }
+
+  mutate(toMutate) {
+    var ctx = this.place.parent.getValueIn(toMutate);
+    var offset = this.place.offset;
+    switch (this.op) {
+      case "insert":
+        var [insertion] = this.args;
+        ctx[offset] = insertion;
+        break;
+      case "replace":
+        var [, after] = this.args;
+        ctx[offset] = after;
+        break;
+      case "remove":
+        delete ctx[offset];
+        break;
+    }
+    return toMutate;
   }
 }
 
