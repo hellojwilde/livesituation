@@ -1,5 +1,7 @@
+"use strict";
+
 module.exports = {
-  cloneObject: function (aObject) {
+  cloneObject: function cloneObject (aObject) {
     var clone = {}, item;
     for (var key in aObject) {
       item = aObject[key];

@@ -8,7 +8,10 @@ module.exports = function (grunt) {
     },
     browserify: {
       build: {
-        files: { "bin/electro.js": ["bin/lib/**/*.js"] }
+        options: { 
+          standalone: "Electro"
+        },
+        files: { "bin/electro.js": ["bin/lib/Electro.js"] }
       }
     },
     jshint: {
@@ -47,7 +50,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks("grunt-contrib-uglify");
 
   grunt.registerTask("build", ["traceur", "browserify"]);
-  grunt.registerTask("test", ["build", "jshint", "mochaTest"]);
+  grunt.registerTask("test", ["build", /*"jshint",*/ "mochaTest"]);
   grunt.registerTask("dist", ["build", "uglify"]);
   
   grunt.registerTask("default", ["build"]);

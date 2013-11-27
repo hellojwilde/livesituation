@@ -1,3 +1,9 @@
+"use strict";
+
+function isTraversible(val) {
+  return typeof val == "object" && val != null;
+}
+
 class Place {
   constructor(path) {
     this._path = path || [];
@@ -28,13 +34,15 @@ class Place {
     var branch = place.path.slice(this.path.length);
     return [union, new Place(branch)];
   }
-  
-  getValueIn(data) {
-    var isTraversible = (val) => 
-      typeof val == "object" && val !== null;
 
-    return this.path.reduce((parent, offset) => 
-      isTraversible(parent) ? parent[offset] : null, data);
+  hasValueAt(data) {
+    var parentValueAt = this.parent.getValueAt(data);
+    return parentValueAt.hasOwnProperty(this.offset);
+  }
+  
+  getValueAt(data) {
+    return this.path.reduce(
+      (parent, offset) => isTraversible(parent) ? parent[offset] : null, data);
   }
 
   concat(...places) {

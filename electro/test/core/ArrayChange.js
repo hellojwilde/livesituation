@@ -1,16 +1,9 @@
-var Place = require("../../lib/place");
-var {ArrayChange} = require("../../lib/change");
+var Place = require("../../lib/core/Place");
+var {ArrayChange} = require("../../lib/core/Change");
 var assert = require("assert");
 var testing = require("../testing");
 
 describe("ArrayChange", function () {
-  describe("-type", function () {
-    it("should return array", function () {
-      var change = new ArrayChange("insert", new Place(["myarr", 0], "ins"));
-      assert.equal(change.type, "array");
-    });
-  });
-
   describe("-inverted", function () {
     describe("insert/remove", function () {
       it("should flip insert to remove", function () {

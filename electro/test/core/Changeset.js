@@ -1,10 +1,10 @@
-var Place = require("../lib/place");
-var {StringChange} = require("../lib/change");
-var Revision = require("../lib/revision");
-var Changeset = require("../lib/changeset");
+var Place = require("../../lib/core/Place");
+var {StringChange} = require("../../lib/core/Change");
+var Revision = require("../../lib/core/Revision");
+var Changeset = require("../../lib/core/Changeset");
 
 var assert = require("assert");
-var testing = require("./testing");
+var testing = require("../testing");
 
 describe("Changeset", function () {
   describe("-baseSequenceId", function () {

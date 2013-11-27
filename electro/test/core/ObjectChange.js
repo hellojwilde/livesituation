@@ -1,16 +1,9 @@
-var Place = require("../../lib/place");
-var {ObjectChange} = require("../../lib/change");
+var Place = require("../../lib/core/Place");
+var {ObjectChange} = require("../../lib/core/Change");
 var assert = require("assert");
 var testing = require("../testing");
 
 describe("ObjectChange", function () {
-  describe("-type", function () {
-    it("should return object", function () {
-      var change = new ObjectChange("insert", new Place(["mykey"], "ins"));
-      assert.equal(change.type, "object");
-    });
-  });
-
   describe("-inverted", function () {
     describe("insert/remove", function () {
       it("should flip insert to remove", function () {

@@ -1,16 +1,9 @@
-var Place = require("../../lib/place");
-var {StringChange} = require("../../lib/change");
+var Place = require("../../lib/core/Place");
+var {StringChange} = require("../../lib/core/Change");
 var assert = require("assert");
 var testing = require("../testing");
 
 describe("StringChange", function () {
-  describe("-type", function () {
-    it("should return string", function () {
-      var change = new StringChange("insert", new Place(["mystr", 0], "ins"));
-      assert.equal(change.type, "string");
-    });
-  });
-
   describe("-inverted", function () {
     it("should flip insert to remove", function () {
       var change = new StringChange("insert", new Place(["mystr", 0]), "ins");

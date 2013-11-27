@@ -1,4 +1,4 @@
-var Place = require("../lib/place");
+var Place = require("../../lib/core/Place");
 var assert = require("assert");
 
 describe("Place", function () {
@@ -111,37 +111,37 @@ describe("Place", function () {
     });
   });
 
-  describe("#getValueIn", function () {
+  describe("#getValueAt", function () {
     it("should return all data on universal ancestor", function () {
       var obj = { hello: "woot", tinker: { when: "always" } };
       var arr = [[1, 2, 3], 1, 3];
-      assert.deepEqual(new Place().getValueIn(obj), obj);
-      assert.deepEqual(new Place().getValueIn(arr), arr);
+      assert.deepEqual(new Place().getValueAt(obj), obj);
+      assert.deepEqual(new Place().getValueAt(arr), arr);
     });
 
     it("should find parts of objects with string keys", function () {
       var obj = { hello: "woot", tinker: { when: "always" } };
-      assert.equal(new Place(["hello"]).getValueIn(obj), "woot");
-      assert.deepEqual(new Place(["tinker"]).getValueIn(obj), { when: "always" });
-      assert.deepEqual(new Place(["tinker", "when"]).getValueIn(obj), "always");
+      assert.equal(new Place(["hello"]).getValueAt(obj), "woot");
+      assert.deepEqual(new Place(["tinker"]).getValueAt(obj), { when: "always" });
+      assert.deepEqual(new Place(["tinker", "when"]).getValueAt(obj), "always");
     });
 
     it("should find items in arrays with numbers", function () {
       var arr = [[1, 2, 3], 1, 3];
-      assert.equal(new Place([1]).getValueIn(arr), 1);
-      assert.deepEqual(new Place([0]).getValueIn(arr), [1, 2, 3]);
-      assert.equal(new Place([0, 1]).getValueIn(arr), 2);
+      assert.equal(new Place([1]).getValueAt(arr), 1);
+      assert.deepEqual(new Place([0]).getValueAt(arr), [1, 2, 3]);
+      assert.equal(new Place([0, 1]).getValueAt(arr), 2);
     });
 
     it("should find items with mixed arrays and objects", function () {
       var obj = { hello: "woot", tinker: [{ when: "always" }] };
-      assert.equal(new Place(["tinker", 0, "when"]).getValueIn(obj), "always");
+      assert.equal(new Place(["tinker", 0, "when"]).getValueAt(obj), "always");
     });
 
     it("should return undefined when traversing noncollections", function () {
       var obj = { hello: "woot", tinker: [{ when: "always" }] };
-      assert.equal(new Place(["tinker", 0, "when", 2]).getValueIn(obj), undefined);
-      assert.equal(new Place(["wat", 0, "when", 2]).getValueIn(obj), undefined);
+      assert.equal(new Place(["tinker", 0, "when", 2]).getValueAt(obj), undefined);
+      assert.equal(new Place(["wat", 0, "when", 2]).getValueAt(obj), undefined);
     });
   });
 

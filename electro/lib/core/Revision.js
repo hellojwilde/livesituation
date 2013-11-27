@@ -1,3 +1,5 @@
+"use strict";
+
 class Revision {
   constructor(sequenceId, data) {
     this._sequenceId = sequenceId;

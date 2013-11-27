@@ -1,4 +1,6 @@
-var Place = require("./place");
+"use strict";
+
+var Place = require("./Place");
 
 class Change {
   constructor(op, place, ...args) {
@@ -11,60 +13,18 @@ class Change {
   get place() { return this._place; }
   get args() { return this._args; }
 
-  get type() { throw new Error("Change.get:type: not implemented."); }
-  get inverted() { throw new Error("Change.get:inverted: not implemented."); }
-
-  relocate(toRelocate) { 
-    throw new Error("Change.relocate: not implemented."); 
-  }
-
-  mutate(toMutate) { 
-    throw new Error("Change.mutate: not implemented."); 
-  }
+  get inverted() { throw "Getter not implemented." }
+  relocate(toRelocate) { throw "Method not implemented." }
+  mutate(toMutate) { throw "Method not implemented." }
 
   transform(toTransform) {
     var relocated = this.relocate(toTransform.place);
-    var constr = toTransform.constructor;
-    return new constr(toTransform.op, relocated, ...toTransform.args);
-  }
-}
-
-class StringChange extends Change {
-  get type() { return "string"; }
-  get inverted() {
-    var op = (this.op == "insert") ? "remove" : "insert";
-    return new StringChange(op, this.place, ...this.args);
-  }
-
-  relocate(toRelocate) {
-    var [union, branch] = this.place.getBranch(toRelocate);
-    if (union === null) return toRelocate;
-    if (union >= this.place.offset) {
-      var [str] = this.args;
-      union += (this.op == "remove" ? -1 : 1) * str.length;
-    }
-    return this.place.parent.concat(new Place([union]), branch);
-  }
-
-  mutate(toMutate) {
-    var str = this.place.parent.getValueIn(toMutate);
-    var offset = this.place.offset;
-    switch (this.op) {
-      case "insert":
-        str = str.substr(0, offset) + this.args[0] + str.substr(offset);
-        break;
-      case "remove":
-        str = str.substr(0, offset) + str.substr(offset + this.args[0].length);
-        break;
-    }
-    var parent = this.place.parent.parent;
-    parent.getValueIn(toMutate)[this.place.parent.offset] = str;
-    return toMutate;
+    var TypeChange = toTransform.constructor;
+    return new TypeChange(toTransform.op, relocated, ...toTransform.args);
   }
 }
 
 class ArrayChange extends Change {
-  get type() { return "array"; }
   get inverted() {
     var op = this.op, place = this.place, args = this.args;
     switch (this.op) {
@@ -110,7 +70,7 @@ class ArrayChange extends Change {
   }
 
   mutate(toMutate) {
-    var ctx = this.place.parent.getValueIn(toMutate);
+    var ctx = this.place.parent.getValueAt(toMutate);
     var offset = this.place.offset;
     switch (this.op) {
       case "insert":
@@ -135,7 +95,6 @@ class ArrayChange extends Change {
 }
 
 class ObjectChange extends Change {
-  get type() { return "object"; }
   get inverted() {
     var op = this.op, args = this.args;
     switch (this.op) {
@@ -156,7 +115,7 @@ class ObjectChange extends Change {
   }
 
   mutate(toMutate) {
-    var ctx = this.place.parent.getValueIn(toMutate);
+    var ctx = this.place.parent.getValueAt(toMutate);
     var offset = this.place.offset;
     switch (this.op) {
       case "insert":
@@ -175,9 +134,37 @@ class ObjectChange extends Change {
   }
 }
 
-module.exports = {
-  Change: Change,
-  StringChange: StringChange,
-  ArrayChange: ArrayChange,
-  ObjectChange: ObjectChange
-};
+class StringChange extends Change {
+  get inverted() {
+    var op = (this.op == "insert") ? "remove" : "insert";
+    return new StringChange(op, this.place, ...this.args);
+  }
+
+  relocate(toRelocate) {
+    var [union, branch] = this.place.getBranch(toRelocate);
+    if (union === null) return toRelocate;
+    if (union >= this.place.offset) {
+      var [str] = this.args;
+      union += (this.op == "remove" ? -1 : 1) * str.length;
+    }
+    return this.place.parent.concat(new Place([union]), branch);
+  }
+
+  mutate(toMutate) {
+    var str = this.place.parent.getValueAt(toMutate);
+    var offset = this.place.offset;
+    switch (this.op) {
+      case "insert":
+        str = str.substr(0, offset) + this.args[0] + str.substr(offset);
+        break;
+      case "remove":
+        str = str.substr(0, offset) + str.substr(offset + this.args[0].length);
+        break;
+    }
+    var parent = this.place.parent.parent;
+    parent.getValueAt(toMutate)[this.place.parent.offset] = str;
+    return toMutate;
+  }
+}
+
+module.exports = { Change, ArrayChange, ObjectChange, StringChange };
