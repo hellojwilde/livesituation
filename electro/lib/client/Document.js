@@ -1,22 +1,7 @@
 "use strict";
 
-var {Change, ArrayChange, ObjectChange, StringChange} = require("../core/Change");
+var {Change} = require("../core/Change");
 var Changeset = require("../core/Changeset");
-
-function getTypeChangeConstructor(place, data) {
-  var parent = place.parent.getValueAt(data);
-  var constructor = null;
-
-  if (typeof parent == "string") {
-    constructor = StringChange;
-  } else if (Array.isArray(parent)) {
-    constructor = ArrayChange;
-  } else if (typeof parent == "object") {
-    constructor = ObjectChange;
-  }
-
-  return constructor;
-}
 
 class Document {
   constructor(state, prefix) {
@@ -35,7 +20,7 @@ class Document {
   get(place) { 
     return this._prefix.concat(place).getValueAt(this.data); 
   }
-  
+
   set(place, value) {
     var prefixed = this._prefix.concat(place);
     if (prefixed.hasValueAt(this.data)) {
@@ -48,27 +33,27 @@ class Document {
 
   insert(place, value) {
     var prefixed = this._prefix.concat(place);
-    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
-    this._state.commit(new TypeChange("insert", prefixed, value));
+    var $change = Change.getPlaceChangeConstructor(prefixed, this.data);
+    this._state.commit(new $change("insert", prefixed, value));
   }
 
   replace(place, before, after) {
     var prefixed = this._prefix.concat(place);
-    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
-    this._state.commit(new TypeChange("replace", prefixed, before, after));
+    var $change = Change.getPlaceChangeConstructor(prefixed, this.data);
+    this._state.commit(new $change("replace", prefixed, before, after));
   }
 
   move(place, to) {
     var prefixed = this._prefix.concat(place);
-    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
-    this._state.commit(new TypeChange("move", prefixed, to));
+    var $change = Change.getPlaceChangeConstructor(prefixed, this.data);
+    this._state.commit(new $change("move", prefixed, to));
   }
 
   remove(place) {
     var prefixed = this._prefix.concat(place);
-    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
+    var $change = Change.getPlaceChangeConstructor(prefixed, this.data);
     var existing = prefixed.getValueAt(this.data);
-    this._state.commit(new TypeChange("remove", prefixed, existing));
+    this._state.commit(new $change("remove", prefixed, existing));
   }
 }
 

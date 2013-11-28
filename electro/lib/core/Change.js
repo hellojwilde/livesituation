@@ -167,4 +167,29 @@ class StringChange extends Change {
   }
 }
 
+Change.getTypeChangeConstructor = function (type) {
+  var constructor = null;
+  switch (type) {
+    case "string":
+      constructor = StringChange;
+      break;
+    case "array":
+      constructor = ArrayChange;
+      break;
+    case "object":
+      constructor = ObjectChange;
+      break;
+  }
+  return constructor;
+}
+
+Change.getPlaceChangeConstructor = function (place, data) {
+  var parent = place.parent.getValueAt(data);
+  var type = typeof parent;
+  if (type == "object" && Array.isArray(parent)) {
+    type = "array";
+  }
+  return Change.getTypeChangeConstructor(type);
+}
+
 module.exports = { Change, ArrayChange, ObjectChange, StringChange };
