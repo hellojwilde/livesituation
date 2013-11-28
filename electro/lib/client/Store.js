@@ -9,6 +9,7 @@ class Store {
   }
 
   get(name, revision = null) {
+    // TODO
     if (!this._documents[name]) {
       this._documents[name] = new Document(name, adapter, revision);
     }

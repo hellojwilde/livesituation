@@ -6,6 +6,7 @@ var Revision = require("../core/Revision");
 var Changeset = require("../core/Changeset");
 var Promise = require("promise");
 
+//TODO
 class AppEngineAdapter extends Adapter {
   constructor(url, token) {
     this._url = url;

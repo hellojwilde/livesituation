@@ -19,60 +19,56 @@ function getTypeChangeConstructor(place, data) {
 }
 
 class Document {
-  constructor(name, adapter, revision) {
-    this._name = name;
-    this._adapter = adapter;
-    this._state = new SynchronizedState(revision);
+  constructor(state, prefix) {
+    this._state = state;
+    this._prefix = prefix || new Place();
   }
 
-  get name() { return this._name; }
+  get name() { return this._state.name; }
   get revision() { return this._state.revision; }
   get data () { return this._state.revision.data; }
 
-  get(place) { return place.getValueAt(this._revision.data); }
+  getFragment(place) { 
+    return new Document(this._state, this._prefix.concat(place)); 
+  }
+
+  get(place) { 
+    return this._prefix.concat(place).getValueAt(this.data); 
+  }
+  
   set(place, value) {
-    if (place.hasValueAt(this.data)) {
-      this.replace(place, place.getValueAt(this.data), value);
+    var prefixed = this._prefix.concat(place);
+    if (prefixed.hasValueAt(this.data)) {
+      this.replace(prefixed, prefixed.getValueAt(this.data), value);
     } else {
-      this.insert(place, value);
+      this.insert(prefixed, value);
     }
     return value;
   }
 
   insert(place, value) {
-    var TypeChange = getTypeChangeConstructor(place, this.data);
-    this._commit(new TypeChange("insert", place, value));
+    var prefixed = this._prefix.concat(place);
+    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
+    this._state.commit(new TypeChange("insert", prefixed, value));
   }
 
   replace(place, before, after) {
-    var TypeChange = getTypeChangeConstructor(place, this.data);
-    this._commit(new TypeChange("insert", place, before, after));
+    var prefixed = this._prefix.concat(place);
+    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
+    this._state.commit(new TypeChange("replace", prefixed, before, after));
   }
 
   move(place, to) {
-    var TypeChange = getTypeChangeConstructor(place, this.data);
-    this._commit(new TypeChange("move", place, to));
+    var prefixed = this._prefix.concat(place);
+    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
+    this._state.commit(new TypeChange("move", prefixed, to));
   }
 
   remove(place) {
-    var TypeChange = getTypeChangeConstructor(place, this.data);
-    var existing = place.getValueAt(this.data);
-    this._commit(new TypeChange("remove", place, existing));
-  }
-
-  _commit(changes) {
-    if (changes instanceof Change)
-      return this.commit(Changeset.fromRevision(this.revision, [changes]));
-    this._callState("commit", changes);
-  }
-
-  _receiveTransaction(transaction) {
-    
-  }
-
-  _callState(method, ...args) {
-    var newState = this._state[method](...args);
-    if (this._state != newState) this._state = newState;
+    var prefixed = this._prefix.concat(place);
+    var TypeChange = getTypeChangeConstructor(prefixed, this.data);
+    var existing = prefixed.getValueAt(this.data);
+    this._state.commit(new TypeChange("remove", prefixed, existing));
   }
 }
 
