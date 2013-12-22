@@ -1,6 +1,6 @@
 "use strict";
 
-class DocumentStateStrategy {
+class DocumentStrategy {
   constructor(revision) { 
     this._revision = revision; 
   }
@@ -12,7 +12,7 @@ class DocumentStateStrategy {
   handleCommit(changeset) { throw "Method not implemented."; }
 }
 
-class Synced extends DocumentStateStrategy {
+class Synced extends DocumentStrategy {
   commit(name, adapter, changeset) {
     adapter.commit(name, changset);
     return new InFlight(this._revision, changeset);
@@ -23,7 +23,7 @@ class Synced extends DocumentStateStrategy {
   }
 }
 
-class InFlight extends DocumentStateStrategy {
+class InFlight extends DocumentStrategy {
   constructor(revision, inflight) {
     this._inflight = inflight;
     super(revision);
@@ -46,7 +46,7 @@ class InFlight extends DocumentStateStrategy {
   }
 }
 
-class InFlightBuffered extends DocumentStateStrategy {
+class InFlightBuffered extends DocumentStrategy {
   constructor(revision, inflight, queued) {
     this._inflight = inflight;
     this._queued = queued;
@@ -77,4 +77,4 @@ class InFlightBuffered extends DocumentStateStrategy {
   }
 }
 
-module.exports = { DocumentStateStrategy, Synced, InFlight, InFlightBuffered};
+module.exports = { DocumentStrategy, Synced, InFlight, InFlightBuffered};

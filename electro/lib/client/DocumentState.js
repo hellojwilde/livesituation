@@ -7,12 +7,12 @@ class DocumentState {
     this._name = name;
     this._adapter = adapter;
     this._strategy = new Synced(name, adapter, revision);
-
     adapter.subscribe(name, revision, this._handleMessage);
   }
 
   get name() { return this._name; }
   get revision() { return this._strategy.revision; }
+  get strategy() { return this._strategy; }
 
   commit(changeset) {
     this._applyStrategy("commit", changeset);

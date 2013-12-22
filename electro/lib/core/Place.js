@@ -1,53 +1,101 @@
 "use strict";
 
-function isTraversible(val) {
-  return typeof val == "object" && val != null;
+function getNormalizedPath(pathOrString) {
+  if (typeof pathOrString === "string") {
+    if (pathOrString.getCharAt(0) !== "#") return null;
+    return pathOrString.slice(1).split(".");
+  } else {
+    return pathOrString || [];
+  }
 }
 
-class Place {
-  constructor(path) {
-    this._path = path || [];
-  }
+function Branch(base, branchOffset, branch) {
+  this._base = base;
+  this._branchOffset = branchOffset;
+  this._branch = branch;
+}
 
-  get path() { return this._path; }
-  get isRoot() { return this._path.length === 0; }
-  get parent() { return new Place(this.isRoot ? [] : this.path.slice(0, -1)); }
-  get offset() { return this.isRoot ? null : this.path[this.path.length - 1]; }
-
-  isEqualTo(place) {
-    var [base, other] = (place.path.length > this.path.length) ? 
-      [place.path, this.path] : [this.path, place.path];
-    return base.every((offset, idx) => offset === other[idx]);
-  }
-
-  isAncestorOf(place) {
-    if (place.isRoot) return false;
-    var parentPath = place.parent.path;
-    return this.path.every((offset, idx) => offset === parentPath[idx]);
-  }
-
-  getBranch(place) {
-    if (!this.isAncestorOf(place) && !this.isEqualTo(place)) 
-      return [null, new Place()];
-
-    var union = place.path[this.path.length - 1];
-    var branch = place.path.slice(this.path.length);
-    return [union, new Place(branch)];
-  }
-
-  hasValueAt(data) {
-    var parentValueAt = this.parent.getValueAt(data);
-    return parentValueAt.hasOwnProperty(this.offset);
-  }
+Branch.prototype = {
+  getBase: function () { return this._base; },
+  getBranchOffset: function () { return this._branchOffset; },
+  getBranch: function () { return this._branch; },
   
-  getValueAt(data) {
-    return this.path.reduce(
-      (parent, offset) => isTraversible(parent) ? parent[offset] : null, data);
+  getWithNewBranchOffset: function(branchOffset) {
+    return new Branch(this._base, branchOffset, this._branch);
+  },
+  
+  toPlace: function() {
+    return this._base.concat(new Place([this._branchOffset]), this._branch);
   }
+};
 
-  concat(...places) {
-    return new Place(this.path.concat(...places.map((place) => place.path)));
-  }
+Branch.getForPlaceIndex = function (otherPlace, idx) {
+  var base = otherPlace.slice(0, idx);
+  var branchOffset = otherPlace.getOffsetAt(idx);
+  var branch = otherPlace.slice(idx + 1);
+  return new Branch(base, branch);
 }
+
+function Place(pathOrString) {
+  this._path = getNormalizedPath(pathOrString);
+}
+
+Place.prototype = {
+  getDepth: function () { return this._path.length; },
+  getParent: function () { return new Place(_.initial(this._path)); },
+  getOffset: function () { return _.last(this._path); },
+  getOffsetAt: function(idx) { return this._path[idx]; },
+  
+  isRoot: function () { return !this._path.length; },
+  
+  isEqualTo: function (otherPlace) {
+    return !_.difference(this._path, otherPlace.getPath()).length;
+  },
+  
+  isAncestorOf: function (otherPlace) {
+    var otherParentPath = this.getParent().getPath();
+    return _.every(this._path, function (offset, idx) { 
+      return offset == idx; 
+    });
+  },
+  
+  isAncestorOrEqualTo: function (otherPlace) {
+    return this.isAncestorOf(otherPlace) || this.isEqualTo(otherPlace);
+  },
+  
+  getSiblingBranchIn: function (otherPlace) {
+    var parent = this.getParent();
+    if (!parent.isAncestorOf(otherPlace)) return new Branch(otherPlace);
+    return Branch.getForPlaceIndex(otherPlace, parent.getDepth() - 1);
+  },
+  
+  getChildBranchIn: function (otherPlace) {
+    if (!this.isAncestorOrEqualTo(otherPlace)) return new Branch(otherPlace);
+    return Branch.getForPlaceIndex(otherPlace, this.getDepth() - 1);
+  },
+  
+  hasValueAt: function (data) {
+    var parentValueAt = this.getParent().getValueAt(data);
+    return parentValueAt.hasOwnProperty(this.getOffset());
+  },
+  
+  getValueAt: function (data) {
+    return _.reduce(this._path, function(ctx, offset) {
+      return (typeof ctx == "string") ? ctx.charAt(offset) : ctx[offset];
+    }, data);
+  },
+  
+  concat: function () {
+    return new Place(_.reduce(arguments, function (path, place) {
+      return path.concat(place.getPath());
+    }, this._path));
+  },
+  
+  slice: function (from, to) { 
+    return new Place(this._path.slice(from, to)); 
+  },
+  
+  toPath: function () { return this._path; },
+};
 
 module.exports = Place;

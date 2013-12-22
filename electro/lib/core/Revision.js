@@ -1,13 +1,13 @@
 "use strict";
 
-class Revision {
-  constructor(sequenceId, data) {
-    this._sequenceId = sequenceId;
-    this._data = data || {};
-  }
-
-  get sequenceId() { return this._sequenceId; }
-  get data() { return this._data; }
+function Revision(sequenceId, data) {
+  this._sequenceId = sequenceId;
+  this._data = data;
 }
+
+Revision.prototype = {
+  getSequenceId: function () { return this._sequenceId; },
+  getData: function () { return this._data; }
+};
 
 module.exports = Revision;
