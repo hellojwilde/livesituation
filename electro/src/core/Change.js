@@ -3,43 +3,47 @@
 var _ = require("underscore");
 var Place = require("./Place");
 
-function getParentTypeChangeProto(methods) {
-  function F () { Change.call(this); }
-  F.prototype = Object.create(Change.prototype);
-  F.prototype.constructor = F;
-  _.extend(F.prototype, methods);
-  return F;
-}
-
-function isChange(obj) {
-  return obj instanceof Change;
-}
-
-function Change(type, place, args) {
-  this._type = type;
-  this._place = place;
-  this._args = args;
-}
-
-Change.prototype = {
-  getType: function () { return this._type; },
-  getPlace: function  () { return this._place; },
-  getArgs: function () { return this._args; },
-  
-  transform: function (otherChange) {
-    var relocated = this.relocate(otherChange.getPlace());
-    var $ParentTypeChange = otherChange.constructor;
-    return new $ParentTypeChange(otherChange.getType(), relocated, 
-                                 otherChange.getArgs());
-  }
-};
-
 var Type = {
   Insert: "insert",
   Remove: "remove",
   Replace: "replace",
   Move: "move"
 };
+
+function AbstractChange(type, place, args) {
+  this._type = type;
+  this._place = place;
+  this._args = args;
+}
+
+AbstractChange.prototype = {
+  getType: function () { return this._type; },
+  getPlace: function  () { return this._place; },
+  getArgs: function () { return this._args; },
+  
+  isEqualTo: function (otherChange) {
+    return this.getType() == otherChange.getType() &&
+      this.getPlace().isEqualTo(otherChange.getPlace()) &&
+      _.isEqual(this.getArgs(), otherChange.getArgs());
+  },
+  
+  transform: function (otherChange) {
+    var relocated = this.relocate(otherChange.getPlace());
+    var ParentTypeChange = otherChange.constructor;
+    return new ParentTypeChange(otherChange.getType(), relocated, 
+                                otherChange.getArgs());
+  }
+};
+
+function getParentTypeChangeProto(methods) {
+  function ParentTypeChange(type, place, args) { 
+    AbstractChange.call(this, type, place, args); 
+  }
+  ParentTypeChange.prototype = Object.create(AbstractChange.prototype);
+  ParentTypeChange.prototype.constructor = ParentTypeChange;
+  _.extend(ParentTypeChange.prototype, methods);
+  return ParentTypeChange;
+}
 
 var ArrayChange = getParentTypeChangeProto({
   getInversion: function () {
@@ -56,8 +60,9 @@ var ArrayChange = getParentTypeChangeProto({
         args = [_.last(args), _.first(args)];
         break;
       case Type.Move:
+        var newOffset = _.first(this._args);
         args = [place.getOffset()];
-        place = place.getParent().concat(new Place([this.args[0]]));
+        place = place.getParent().concat(new Place(newOffset));
         break;
     }
     
@@ -72,7 +77,7 @@ var ArrayChange = getParentTypeChangeProto({
         // children forward one on insertion and backward space on removal.
         var sibling = this._place.getSiblingBranchIn(otherPlace);
         var offset = sibling.getBranchOffset();
-        if (offset && offset >= this._place.getOffset()) {
+        if (!_.isUndefined(offset) && offset >= this._place.getOffset()) {
           offset += (this._type == Type.Insert ? 1 : -1);
           return sibling.getWithNewBranchOffset(offset).toPlace();
         }
@@ -88,17 +93,21 @@ var ArrayChange = getParentTypeChangeProto({
         var offset = this._place.getOffset();
         
         var children = this._place.getChildBranchIn(otherPlace);
-        if (children.getBranchOffset()) {
+        if (!_.isUndefined(children.getBranchOffset())) {
           return children.getWithNewBranchOffset(newOffset).toPlace();
         }
         
         var sibling = this._place.getSiblingBranchIn(otherPlace);
         var siblingOffset = sibling.getBranchOffset();
-        if (siblingOffset) {
-          if (newOffset > offset && siblingOffset > offset && 
-              siblingOffset <= newOffset) siblingOffset--;
-          if (newOffset < offset && siblingOffset > newOffset &&
-              siblingOffset <= offset) siblingOffset++;
+        if (!_.isUndefined(siblingOffset)) {
+          if (newOffset > offset && 
+              siblingOffset < newOffset && siblingOffset >= offset) {
+            siblingOffset--;
+          }
+          if (newOffset < offset && 
+              newOffset <= siblingOffset && siblingOffset < offset) {
+            siblingOffset++;
+          }
           return sibling.getWithNewBranchOffset(siblingOffset).toPlace();
         }
         break;
@@ -182,7 +191,7 @@ var ObjectChange = getParentTypeChangeProto({
 var StringChange = getParentTypeChangeProto({
   getInversion: function () {
     var type = this._type == Type.Insert ? Type.Remove : Type.Insert;
-    return new StringChange(op, this._place, this._args);
+    return new StringChange(type, this._place, this._args);
   },
   
   relocate: function (otherPlace) {
@@ -206,7 +215,7 @@ var StringChange = getParentTypeChangeProto({
     var offset = this._place.getOffset();
     var str = _.first(this._args);
     
-    switch (this,_type) {
+    switch (this._type) {
       case Type.Insert:
         ctx = ctx.substr(0, offset) + str + ctx.substr(offset);
         break;
@@ -223,7 +232,6 @@ var StringChange = getParentTypeChangeProto({
 });
 
 module.exports = {
-  isChange: isChange,
   ChangeType: Type,
   ArrayChange: ArrayChange,
   ObjectChange: ObjectChange,

@@ -1,37 +1,39 @@
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON("package.json"),
-    traceur: {
-      build: {
-        files: { "bin/": ["lib/**/*.js", "test/**/*.js"] }
-      }
-    },
     browserify: {
       build: {
         options: { 
           standalone: "Electro"
         },
-        files: { "bin/electro.js": ["bin/lib/Electro.js"] }
+        files: { "bin/electro.js": ["src/Electro.js"] }
       }
     },
     jshint: {
       options: {
-        esnext: true,
+        '-W004': true, /* variable redeclarations */
         node: true
       },
-      test: ["lib/**/*.js"]
+      test: ["src/**/*.js"]
     },
-    mochaTest: {
+    mochacov: {
+      cov: {
+        options: {
+          reporter: "html-cov",
+          output: "./bin/coverage.html"
+        },
+        src: ["test/**/*.js"]
+      },
       test: {
         options: {
           reporter: "spec"
         },
-        src: ["bin/test/**/*.js"]
+        src: ["test/**/*.js"]
       }
     },
     watch: {
       test: {
-        files: ["lib/**/*.js", "test/**/*.js"],
+        files: ["src/**/*.js", "test/**/*.js"],
         tasks: ["test"]
       }
     },
@@ -42,15 +44,14 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.loadNpmTasks("grunt-traceur");
   grunt.loadNpmTasks("grunt-browserify")
   grunt.loadNpmTasks("grunt-contrib-jshint");
-  grunt.loadNpmTasks("grunt-mocha-test");
+  grunt.loadNpmTasks('grunt-mocha-cov');
   grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.loadNpmTasks("grunt-contrib-uglify");
 
-  grunt.registerTask("build", ["traceur", "browserify"]);
-  grunt.registerTask("test", ["build", /*"jshint",*/ "mochaTest"]);
+  grunt.registerTask("build", ["browserify"]);
+  grunt.registerTask("test", ["build", "jshint", "mochacov:test", "mochacov:cov"]);
   grunt.registerTask("dist", ["build", "uglify"]);
   
   grunt.registerTask("default", ["build"]);

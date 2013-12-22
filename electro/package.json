@@ -8,6 +8,13 @@
       "email": "hello@jwilde.me"
     }
   ],
+  "scripts": {
+    "blanket": {
+      "pattern": [
+        "src"
+      ]
+    }
+  },
   "devDependencies": {
     "grunt": "~0.4.2",
     "mocha": "~1.14.0",
@@ -17,7 +24,9 @@
     "grunt-contrib-watch": "~0.5.3",
     "grunt-contrib-jshint": "~0.7.2",
     "browserify": "~2.35.4",
-    "grunt-browserify": "~1.2.11"
+    "grunt-browserify": "~1.2.11",
+    "grunt-blanket-mocha": "~0.3.3",
+    "grunt-mocha-cov": "~0.1.1"
   },
   "dependencies": {
     "q": "~0.9.7",

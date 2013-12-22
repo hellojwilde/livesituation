@@ -1,155 +1,209 @@
-var Place = require("../../lib/core/Place");
+var Place = require("../../src/core/Place");
 var assert = require("assert");
 
 describe("Place", function () {
-  describe("-path", function () {
-    it("should return whatever is passed in, [] if null", function () {
-      assert.deepEqual(new Place([1, 2, 3]).path, [1, 2, 3]);
-      assert.deepEqual(new Place().path, []);
+  describe("constructor", function () {
+    it("path(...) -> ... or []", function () {
+      assert.deepEqual(new Place().toPath(), []);
+      assert.deepEqual(new Place([]).toPath(), []);
+      assert.deepEqual(new Place([1, 2, 3]).toPath(), [1, 2, 3]);
+    });
+  });
+  
+  describe("#isRoot", function () {
+    it("isRoot([]) -> true", function () {
+      assert(new Place().isRoot());
+      assert(!new Place([1]).isRoot());
+    });
+  });
+  
+  describe("#getDepth", function () {
+    it("depth([...]) = [...].length", function () {
+      assert.equal(new Place().getDepth(), 0, "[]");
+      assert.equal(new Place([1]).getDepth(), 1, "[1]");
     });
   });
 
-  describe("-isRoot", function () {
-    it("should return true iff universal ancestor", function () {
-      assert(new Place().isRoot);
-      assert(!new Place([1]).isRoot);
-    });
-  });
-
-  describe("-parent", function () {
-    it("should respect ancestry algebra", function () {
+  describe("#getParent", function () {
+    it("parent([a, b, c]) -> [a, b]", function () {
       var place = new Place(["woot", "hello", "hi"]);
-      var parent = place.parent;
-
-      assert.deepEqual(parent.path, ["woot", "hello"], "parent is as expected");
-      assert(parent.isAncestorOf(place), "parent is ancestor");
+      assert.deepEqual(place.getParent().toPath(), ["woot", "hello"]);
     });
 
-    it("should return universal ancestor on universal ancestor", function () {
-      assert(new Place().parent.isRoot)
+    it("parent([]) -> []", function () {
+      assert(new Place().getParent().isRoot());
     });
   });
 
-  describe("-offset", function () {
-    it("should return last item of a sane array", function () {
+  describe("#getOffset", function () {
+    it("offset([a, b, c]) -> c", function () {
       var place = new Place(["woot", "hello", "hi"]);
-      assert.equal(place.offset, "hi");
+      assert.equal(place.getOffset(), "hi");
     });
 
-    it("should return null on universal ancestor", function () {
-      assert.strictEqual(new Place().offset, null);
+    it("offset([]) -> undefined", function () {
+      assert.strictEqual(new Place().getOffset(), undefined);
     });
   });
 
   describe("#isEqualTo", function () {
-    it("should reject places of different lengths", function () {
-      assert(!new Place([1, 2]).isEqualTo(new Place([])));
-      assert(!new Place([1, 2]).isEqualTo(new Place([1])));
-      assert(!new Place([1]).isEqualTo(new Place([1, 2])));
-      assert(!new Place().isEqualTo(new Place([1])));
-      assert(!new Place([]).isEqualTo(new Place([1])));
+    it("if places are of different depths, fail", function () {
+      assert(!new Place([1, 2]).isEqualTo(new Place([])), "[1,2] <-> []");
+      assert(!new Place([1, 2]).isEqualTo(new Place([1])), "[1,2] <-> [1]");
+      assert(!new Place([1]).isEqualTo(new Place([1, 2])), "[1] <-> [1,2]");
+      assert(!new Place().isEqualTo(new Place([1])), "[] <-> [1]");
     });
 
-    it("should accept places of different types", function () {
-      assert(new Place().isEqualTo(new Place([])));
-      assert(new Place([1]).isEqualTo(new Place([1])));
-      assert(new Place([1, "woot"]).isEqualTo(new Place([1, "woot"])));
+    it("if places are same, accept", function () {
+      assert(new Place([]).isEqualTo(new Place([])), "[] <-> []");
+      assert(new Place([1]).isEqualTo(new Place([1])), "[1] <-> [1]");
+      assert(new Place([1, "woot"]).isEqualTo(new Place([1, "woot"])), 
+             "[1, woot] <-> [1, woot]");
     });
   }); 
 
   describe("#isAncestorOf", function () {
-    it("should reject equal locations", function () {
-      assert(!new Place().isAncestorOf(new Place()), "empty places");
-      assert(!new Place([1, 2, 3]).isAncestorOf(new Place([1, 2, 3])), "nested arrays");
-      assert(!new Place(["woot"]).isAncestorOf(new Place(["woot"])), "object key");
+    it("ancestor([a...], [a...]) -> false", function () {
+      assert(!new Place([1]).isAncestorOf(new Place([1])), 
+             "ancestor([1], [1])");
+      assert(!new Place([1, 2, 3]).isAncestorOf(new Place([1, 2, 3])),
+             "ancestor([1,2,3], [1,2,3])");
     });
 
-    it("should accept empty place as universal ancestor", function () {
-      assert(new Place().isAncestorOf(new Place([1, 2, 3])), "nested arrays");
-      assert(new Place().isAncestorOf(new Place([1])), "array");
-      assert(new Place().isAncestorOf(new Place([1, "woot"])), "array and object");
+    it("ancestor([], [...]) -> true", function () {
+      assert(new Place().isAncestorOf(new Place([])), "ancestor([], [])");
+      assert(new Place().isAncestorOf(new Place([1])), 
+             "ancestor([], [1])");
+      assert(new Place().isAncestorOf(new Place([1, 2, 3])), 
+             "ancestor([], [1,2,3])");
     });
 
-    it("should accept parent/children", function () {
-      assert(new Place([1]).isAncestorOf(new Place([1, 2])), "parent/child");
-      assert(new Place([1,2]).isAncestorOf(new Place([1, 2, 3])), "deeper parent/child");
-      assert(!new Place(["1"]).isAncestorOf(new Place([1, 2])), "types differentated");
+    it("ancestor([a...], [a..., b...]) -> true", function () {
+      assert(new Place([1]).isAncestorOf(new Place([1, 2])), 
+             "ancestor([1], [1,2])");
+      assert(new Place([1,2]).isAncestorOf(new Place([1, 2, 3])), 
+             "ancestor([1,2], [1,2,3])");
+    });
+    
+    it("ancestor([a], ['a', b...]) -> false", function () {
+      assert(!new Place(["1"]).isAncestorOf(new Place([1, 2])), 
+             "ancestor(['1'], [1,2])");
     });
 
-    it("should accept grandchildren", function () {
-      assert(new Place([1]).isAncestorOf(new Place([1, 2, 3])), "grandchildren");
-    });
-
-    it("should reject siblings", function () {
-      assert(!new Place([1, 2]).isAncestorOf(new Place([1, 3])), "array siblings");
-      assert(!new Place([1, "hello"]).isAncestorOf(new Place([1, "hi"])), "object siblings");
-    });
-
-    it("should reject grandchildren of siblings", function () {
-      assert(!new Place([1, 2]).isAncestorOf(new Place([1, 3, 2])), "array siblings");
-      assert(!new Place([1, "hey"]).isAncestorOf(new Place([1, "hi", 1])), "object siblings");
-    });
-  });
-
-  describe("#getBranch", function () {
-    it("should reject if place is not ancestor of childPlace", function () {
-      var [offset, after] = new Place([1]).getBranch(new Place([2]));
-      assert.equal(offset, null, "offset is null");
-      assert(after.isEqualTo(new Place()), "after is empty");
-    });
-
-    it("should return branching point if places are siblings", function () {
-      var [offset, after] = new Place([1]).getBranch(new Place([1]));
-      assert.equal(offset, 1, "offset is 1");
-      assert(after.isEqualTo(new Place()), "after is empty");
-    });
-
-    it("should return offset if child", function () {
-      var [offset, after] = new Place([1]).getBranch(new Place([1, 2]));
-      assert.equal(offset, 1, "offset is 1");
-      assert(after.isEqualTo(new Place([2])), "after contains 2 after the branch point");
+    it("ancestor([a, b], [a, c]) -> false", function () {
+      assert(!new Place([1, 2]).isAncestorOf(new Place([1, 3])), 
+             "ancestor([1,2], [1,3])");
     });
   });
-
+  
+  function assertBranchEmpty(branch, base) {
+    assert.deepEqual(branch.getBase().toPath(), base);
+    assert(!branch.getBranchOffset());
+    assert(!branch.getBranch());
+  }
+  
+  describe("#getSiblingBranchIn", function () {
+    it("sibling([a,b],[b,c,d]) -> empty", function () {
+      var branch = new Place([1,2]).getSiblingBranchIn(new Place([3,4,5]));
+      assertBranchEmpty(branch, [3,4,5]);
+    });
+    
+    it("sibling([a,b],[a,c,d...]) -> branch([a],c,[d...])", function () {
+      var branch = new Place([1,2]).getSiblingBranchIn(new Place([1,3,5,6]));
+      assert.deepEqual(branch.getBase().toPath(), [1]);
+      assert.equal(branch.getBranchOffset(), 3);
+      assert.deepEqual(branch.getBranch().toPath(), [5,6]);
+    });
+  });
+  
+  describe("#getChildBranchIn", function () {
+    it("child([a,b],[b,c,d]) -> empty", function () {
+      var branch = new Place([1,2]).getChildBranchIn(new Place([3,4,5]));
+      assertBranchEmpty(branch, [3,4,5]);
+    });
+    
+    it("child([a,b],[a,c,d]) -> empty", function () {
+      var branch = new Place([1,2]).getChildBranchIn(new Place([1,4,5]));
+      assertBranchEmpty(branch, [1,4,5]);
+    });
+    
+    it("child([a,b],[a,b,d]) -> branch([a],b,[d]", function () {
+      var branch = new Place([1,2]).getChildBranchIn(new Place([1,2,3]));
+      assert.deepEqual(branch.getBase().toPath(), [1]);
+      assert.equal(branch.getBranchOffset(), 2);
+      assert.deepEqual(branch.getBranch().toPath(), [3]);
+    });
+  });
+  
+  describe("#hasValueAt", function () {
+    it("hasvalue([], ...) -> true", function () {
+      assert(new Place([]).hasValueAt({}), "{}");
+      assert(new Place([]).hasValueAt("woot"), "'woot'");
+      assert(new Place([]).hasValueAt(null), "null");
+    });
+    
+    it("hasvalue([], undef) -> true", function () {
+      assert(!new Place([]).hasValueAt(undefined), "undefined");
+    });
+  });
+  
   describe("#getValueAt", function () {
-    it("should return all data on universal ancestor", function () {
-      var obj = { hello: "woot", tinker: { when: "always" } };
-      var arr = [[1, 2, 3], 1, 3];
-      assert.deepEqual(new Place().getValueAt(obj), obj);
-      assert.deepEqual(new Place().getValueAt(arr), arr);
+    var value = { hello: "woot", other: { woot: "wootwoot" } };
+    
+    it("getvalue([], ...) -> ...", function () {
+      assert.equal(new Place([]).getValueAt(value), value);
     });
-
-    it("should find parts of objects with string keys", function () {
-      var obj = { hello: "woot", tinker: { when: "always" } };
-      assert.equal(new Place(["hello"]).getValueAt(obj), "woot");
-      assert.deepEqual(new Place(["tinker"]).getValueAt(obj), { when: "always" });
-      assert.deepEqual(new Place(["tinker", "when"]).getValueAt(obj), "always");
+    
+    it("getvalue([a...], b...) -> b.a...", function () {
+      assert.equal(new Place(["hello"]).getValueAt(value), value.hello);
+      assert.equal(new Place(["other", "woot"]).getValueAt(value), 
+                   value.other.woot);
     });
-
-    it("should find items in arrays with numbers", function () {
-      var arr = [[1, 2, 3], 1, 3];
-      assert.equal(new Place([1]).getValueAt(arr), 1);
-      assert.deepEqual(new Place([0]).getValueAt(arr), [1, 2, 3]);
-      assert.equal(new Place([0, 1]).getValueAt(arr), 2);
-    });
-
-    it("should find items with mixed arrays and objects", function () {
-      var obj = { hello: "woot", tinker: [{ when: "always" }] };
-      assert.equal(new Place(["tinker", 0, "when"]).getValueAt(obj), "always");
-    });
-
-    it("should return undefined when traversing noncollections", function () {
-      var obj = { hello: "woot", tinker: [{ when: "always" }] };
-      assert.equal(new Place(["tinker", 0, "when", 2]).getValueAt(obj), undefined);
-      assert.equal(new Place(["wat", 0, "when", 2]).getValueAt(obj), undefined);
+    
+    it("getvalue([idx], 'str') -> 'str'[idx]", function () {
+      assert.equal(new Place([3]).getValueAt("woot"), "t");
     });
   });
-
+  
   describe("#concat", function () {
-    it("should respect ancestry algebra", function () {
+    it("concat([a], [b]) == [a,b]", function () {
       var place = new Place([1, 2, 4]);
-      var child = new Place([place.offset]);
-      assert(place.isEqualTo(place.parent.concat(child)));
-    })
+      var child = new Place([place.getOffset()]);
+      assert(place.isEqualTo(place.getParent().concat(child)));
+    });
+  });
+  
+  describe("#slice", function () {
+    it("slice([a,b,c], 1) == [b,c]", function () {
+      assert.deepEqual(new Place([1,2,3]).slice(1).toPath(), [2,3]);
+    });
+    
+    it("slice([a,b,c], 0, 2) == [a,b]", function () {
+      assert.deepEqual(new Place([1,2,3]).slice(0,2).toPath(), [1,2]);
+    });
+  });
+  
+  describe("#toPath", function () {
+    it("path([...]) -> [...]", function () {
+      assert.deepEqual(new Place([1, 2, 3]).toPath(), [1, 2, 3]);
+      assert.deepEqual(new Place().toPath(), []);
+    });
+  });
+});
+
+describe("Branch", function () {
+  describe("#getWithNewBranchOffset", function () {
+    var dec = new Place([1,3,5,6]);
+    var branch = new Place([1,2]).getSiblingBranchIn(dec);
+    var newBranch = branch.getWithNewBranchOffset(3);
+    assert.equal(newBranch.getBranchOffset(), 3);
+  });
+  
+  describe("#toPlace", function () {
+    it("toplace(sibling(..., [...])) -> [...]", function () {
+      var dec = new Place([1,3,5,6]);
+      var branch = new Place([1,2]).getSiblingBranchIn(dec);
+      assert.deepEqual(branch.toPlace().toPath(), dec.toPath());
+    });
   });
 });

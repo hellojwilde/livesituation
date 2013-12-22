@@ -1,48 +1,44 @@
-var Place = require("../../lib/core/Place");
-var {ArrayChange} = require("../../lib/core/Change");
 var assert = require("assert");
-var testing = require("../testing");
+var _ = require("underscore");
+
+var Place = require("../../src/core/Place");
+var Change = require("../../src/core/Change");
+var ArrayChange = Change.ArrayChange, ChangeType = Change.ChangeType;
 
 describe("ArrayChange", function () {
-  describe("-inverted", function () {
-    describe("insert/remove", function () {
-      it("should flip insert to remove", function () {
-        var change = new ArrayChange("insert", new Place(["mykey", 0]), "ins");
-        assert.equal(change.inverted.op, "remove");
+  describe("#getInverted", function () {
+    describe("insert & remove", function () {
+      it("invert(insert) -> remove", function () {
+        var change = new ArrayChange(ChangeType.Insert, new Place());
+        assert.equal(change.getInversion().getType(), ChangeType.Remove);
+      });
+      
+      it("invert(remove) -> insert", function () {
+        var change = new ArrayChange(ChangeType.Remove, new Place());
+        assert.equal(change.getInversion().getType(), ChangeType.Insert);
       });
     });
 
     describe("replace", function () {
-      it("should flip order of before and after", function () {
-        var change = new ArrayChange("replace", new Place(["k", 0]), "b", "a");
-        assert.deepEqual(change.inverted.args, ["a", "b"]);
+      it("invert(<before, after>) -> <after, before>", function () {
+        var change = new ArrayChange(ChangeType.Replace, null, ["b", "a"]);
+        assert.deepEqual(change.getInversion().getArgs(), ["a", "b"]);
       });
     });
 
     describe("move", function () {
-      it("should flip the offset and the newOffset", function () {
-        var change = new ArrayChange("move", new Place(["k", 0]), 3);
-        assert.equal(change.inverted.place.offset, change.args[0]);
-        assert.equal(change.inverted.args[0], change.place.offset);
+      it("invert(<...old, new>) -> <...new, old>", function () {
+        var change = new ArrayChange(ChangeType.Move, new Place(["k", 0]), [3]);
+        var inv = change.getInversion();
+        assert.equal(inv.getPlace().getOffset(), _.first(change.getArgs()));
+        assert.equal(_.first(inv.getArgs()), change.getPlace().getOffset());
       });
-    });
-
-    it("should satisfy change = invert(invert(change))", function () {
-      var insert = new ArrayChange("insert", new Place(["k", 0]), "i");
-      var remove = new ArrayChange("remove", new Place(["k", 0]), "i");
-      var replace = new ArrayChange("replace", new Place(["k", 0]), "b", "a");
-      var move = new ArrayChange("move", new Place(["k", 0]), 2);
-
-      testing.assertChangeEqual(insert, insert.inverted.inverted, "insert");
-      testing.assertChangeEqual(remove, remove.inverted.inverted, "remove");
-      testing.assertChangeEqual(replace, replace.inverted.inverted, "replace");
-      testing.assertChangeEqual(move, move.inverted.inverted, "move");
     });
   });
 
   describe("#relocate", function () {
-    describe("insert/remove", function () {
-      it("should not affect reference before an operation", function () {
+    describe("insert & remove", function () {
+      it("should not affect place before a change", function () {
         var toRelocate = new Place(["k", 0]);
         var insert = new ArrayChange("insert", new Place(["k", 5]), "i");
         var remove = new ArrayChange("remove", new Place(["k", 5]), "i");
@@ -51,14 +47,14 @@ describe("ArrayChange", function () {
         assert(remove.relocate(toRelocate).isEqualTo(toRelocate), "remove")
       });
 
-      it("should nudge reference to the place forward on insert", function () {
+      it("should nudge place after insert forward", function () {
         var toRelocate = new Place(["k", 5]);
         var expectedRelocation = new Place(["k", 6]);
         var change = new ArrayChange("insert", toRelocate, "hi");
         assert(change.relocate(toRelocate).isEqualTo(expectedRelocation));
       });
 
-      it("should nudge reference to the place back on remove", function () {
+      it("should nudge place after remove backward", function () {
         var toRelocate = new Place(["k", 5]);
         var expectedRelocation = new Place(["k", 4]);
         var change = new ArrayChange("remove", toRelocate, "hi");
@@ -84,7 +80,7 @@ describe("ArrayChange", function () {
 
     describe("move", function () {
       it("should not bother places entirely above/below", function () {
-        var move = new ArrayChange("move", new Place(["k", 1]), 5);
+        var move = new ArrayChange("move", new Place(["k", 1]), [5]);
         var above = new Place(["k", 0]);
         var below = new Place(["k", 6]);
         assert(move.relocate(above).isEqualTo(above), "above");
@@ -92,23 +88,30 @@ describe("ArrayChange", function () {
       });
 
       it("should shift items in range up when moving down", function () {
-        var move = new ArrayChange("move", new Place(["k", 1]), 5);
+        var move = new ArrayChange("move", new Place(["k", 1]), [5]);
         var inRange = new Place(["k", 2]);
         var expected = new Place(["k", 1]);
         assert(move.relocate(inRange).isEqualTo(expected));
       });
 
       it("should shift items in range down when moving up", function () {
-        var move = new ArrayChange("move", new Place(["k", 5]), 1);
+        var move = new ArrayChange("move", new Place(["k", 5]), [1]);
         var inRange = new Place(["k", 2]);
         var expected = new Place(["k", 3]);
         assert(move.relocate(inRange).isEqualTo(expected));
       });
 
       it("should not bother unrelated places", function () {
-        var move = new ArrayChange("move", new Place(["k", 5]), 1);
+        var move = new ArrayChange("move", new Place(["k", 5]), [1]);
         var inRangeSorta = new Place(["j", 2]);
         assert(move.relocate(inRangeSorta).isEqualTo(inRangeSorta));
+      });
+      
+      it("should shift items that are direct children", function () {
+        var move = new ArrayChange("move", new Place(["k", 5]), [1]);
+        var inRange = new Place(["k", 5]);
+        var expected = new Place(["k", 1]);
+        assert(move.relocate(inRange).isEqualTo(expected));
       });
     });
   });
@@ -116,55 +119,58 @@ describe("ArrayChange", function () {
   describe("#mutate", function () {
     describe("insert/remove", function () {
       it("should insert at appropriate location", function () {
-        var insert = new ArrayChange("insert", new Place([1]), 2);
+        var insert = new ArrayChange("insert", new Place([1]), [2]);
         var ctx = [1, 3, 4];
         assert.deepEqual(insert.mutate(ctx), [1, 2, 3, 4]);
       });
 
       it("should remove from appropriate location", function () {
-        var remove = new ArrayChange("remove", new Place([3, 0]), 4);
+        var remove = new ArrayChange("remove", new Place([3, 0]), [4]);
         var ctx = [1, 3, 4, [4, 5]];
         assert.deepEqual(remove.mutate(ctx), [1, 3, 4, [5]]);
       });
 
       it("should satisfy data = m(i(change), m(change, data))", function () {
-        var orig = new ArrayChange("insert", new Place([1]), 2);
+        var orig = new ArrayChange("insert", new Place([1]), [2]);
         var ctx = [1, 3, 4];
-        assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), [1, 3, 4]);
+        var inv = orig.getInversion();
+        assert.deepEqual(inv.mutate(orig.mutate(ctx)), [1, 3, 4]);
       });
     });
 
     describe("replace", function () {
       it("should replace at expected location", function () {
-        var replace = new ArrayChange("replace", new Place([1]), "w", "o");
+        var replace = new ArrayChange("replace", new Place([1]), ["w", "o"]);
         var ctx = ["w", "w", "o", "t"];
         assert.deepEqual(replace.mutate(ctx), ["w", "o", "o", "t"]);
       });
 
       it("should satisfy data = m(i(change), m(change, data))", function () {
-        var orig = new ArrayChange("replace", new Place([1]), "w", "o");
+        var orig = new ArrayChange("replace", new Place([1]), ["w", "o"]);
         var ctx = ["w", "w", "o", "t"];
-        assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), ["w", "w", "o", "t"]);
+        var inv = orig.getInversion()
+        assert.deepEqual(inv.mutate(orig.mutate(ctx)), ["w", "w", "o", "t"]);
       });
     });
 
     describe("move", function () {
       it("should move downward at expected locations", function () {
-        var move = new ArrayChange("move", new Place([0]), 3);
+        var move = new ArrayChange("move", new Place([0]), [3]);
         var ctx = [1, 2, 3, 4, 5];
         assert.deepEqual(move.mutate(ctx), [2, 3, 4, 1, 5]);
       });
 
       it("should move upward at expected locations", function () {
-        var move = new ArrayChange("move", new Place([4]), 0);
+        var move = new ArrayChange("move", new Place([4]), [0]);
         var ctx = [1, 2, 3, 4, 5];
         assert.deepEqual(move.mutate(ctx), [5, 1, 2, 3, 4]);
       });
 
       it("should satisfy data = m(i(change), m(change, data))", function () {
-        var orig = new ArrayChange("move", new Place([4]), 0);
+        var orig = new ArrayChange("move", new Place([4]), [0]);
         var ctx = [1, 2, 3, 4, 5];
-        assert.deepEqual(orig.inverted.mutate(orig.mutate(ctx)), [1, 2, 3, 4, 5]);
+        var inv = orig.getInversion();
+        assert.deepEqual(inv.mutate(orig.mutate(ctx)), [1, 2, 3, 4, 5]);
       });
     });
   });
