@@ -1,5 +1,6 @@
 "use strict";
 
+var _ = require("underscore");
 var Place = require("./Place");
 
 function getParentTypeChangeProto(methods) {

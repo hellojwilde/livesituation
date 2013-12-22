@@ -20,6 +20,7 @@
     "grunt-browserify": "~1.2.11"
   },
   "dependencies": {
-    "q": "~0.9.7"
+    "q": "~0.9.7",
+    "underscore": "~1.5.2"
   }
 }

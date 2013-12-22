@@ -1,5 +1,7 @@
 "use strict";
 
+var _ = require("underscore");
+
 function getNormalizedPath(pathOrString) {
   if (typeof pathOrString === "string") {
     if (pathOrString.getCharAt(0) !== "#") return null;

@@ -1,5 +1,6 @@
 "use strict";
 
+var _ = require("underscore");
 var Change = require("./Change");
 var Revision = require("./Revision");
 
@@ -51,4 +52,6 @@ Changeset.prototype = {
     this._changes.push(change);
     return this;
   }
-}
+};
+
+module.exports = Changeset;
