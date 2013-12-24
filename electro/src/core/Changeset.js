@@ -1,6 +1,7 @@
 "use strict";
 
 var _ = require("underscore");
+
 var Change = require("./Change");
 var Revision = require("./Revision");
 
@@ -33,9 +34,10 @@ Changeset.prototype = {
   
   transform: function (otherChange) {
     if (otherChange instanceof Changeset) {
-      return new Changeset(_.map(otherChange.getChanges(), function (change) {
+      var otherChanges = otherChange.getChanges();
+      return new Changeset(_.map(otherChanges, _.bind(function (change) {
         return this.transform(change);
-      }.bind(this)));
+      }, this)));
     } else {
       return _.reduce(this._changes, function (trans, change) {
         return change.transform(trans);

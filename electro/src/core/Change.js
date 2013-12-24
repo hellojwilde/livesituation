@@ -10,13 +10,13 @@ var Type = {
   Move: "move"
 };
 
-function AbstractChange(type, place, args) {
+function Change(type, place, args) {
   this._type = type;
   this._place = place;
   this._args = args;
 }
 
-AbstractChange.prototype = {
+Change.prototype = {
   getType: function () { return this._type; },
   getPlace: function  () { return this._place; },
   getArgs: function () { return this._args; },
@@ -35,17 +35,13 @@ AbstractChange.prototype = {
   }
 };
 
-function getParentTypeChangeProto(methods) {
-  function ParentTypeChange(type, place, args) { 
-    AbstractChange.call(this, type, place, args); 
-  }
-  ParentTypeChange.prototype = Object.create(AbstractChange.prototype);
-  ParentTypeChange.prototype.constructor = ParentTypeChange;
-  _.extend(ParentTypeChange.prototype, methods);
-  return ParentTypeChange;
+function ArrayChange(type, place, args) {
+  Change.call(this, type, place, args);
 }
 
-var ArrayChange = getParentTypeChangeProto({
+ArrayChange.prototype = _.extend(Object.create(Change.prototype), {
+  constructor: ArrayChange,
+  
   getInversion: function () {
     var type = this._type;
     var place = this._place;
@@ -70,6 +66,7 @@ var ArrayChange = getParentTypeChangeProto({
   },
   
   relocate: function (otherPlace) {
+    /*jshint -W004*/
     switch(this._type) {
       case Type.Insert:
       case Type.Remove:
@@ -114,6 +111,7 @@ var ArrayChange = getParentTypeChangeProto({
     }
     
     return otherPlace;
+    /*jshint +W004*/
   },
   
   mutate: function (data) {
@@ -143,7 +141,13 @@ var ArrayChange = getParentTypeChangeProto({
   }
 });
 
-var ObjectChange = getParentTypeChangeProto({
+function ObjectChange(type, place, args) {
+  Change.call(this, type, place, args);
+}
+
+ObjectChange.prototype = _.extend(Object.create(Change.prototype), {
+  constructor: ObjectChange,
+  
   getInversion: function () {
     var type = this._type;
     var args = this._args;
@@ -188,7 +192,13 @@ var ObjectChange = getParentTypeChangeProto({
   }
 });
 
-var StringChange = getParentTypeChangeProto({
+function StringChange(type, place, args) {
+  Change.call(this, type, place, args);
+}
+
+StringChange.prototype = _.extend(Object.create(Change.prototype), {
+  constructor: StringChange,
+  
   getInversion: function () {
     var type = this._type == Type.Insert ? Type.Remove : Type.Insert;
     return new StringChange(type, this._place, this._args);

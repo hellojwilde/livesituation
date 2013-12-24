@@ -29,8 +29,7 @@ describe("ObjectChange", function () {
 
   describe("#relocate", function () {
     it("should invalidate children", function () {
-      var insert = new ObjectChange(ChangeType.Insert, new Place(["k", "j"]), 
-                                    ["i"]);
+      var insert = new ObjectChange(ChangeType.Insert, new Place(["k", "j"]), ["i"]);
       var toRelocate = new Place(["k", "j", 1]);
       var anotherToRelocate = new Place(["k", "j", "l", "woot"]);
 
@@ -39,8 +38,7 @@ describe("ObjectChange", function () {
     });
 
     it("should not invalidate same reference or other branches", function () {
-      var insert = new ObjectChange(ChangeType.Insert, new Place(["k", "j"]), 
-                                    ["i"]);
+      var insert = new ObjectChange(ChangeType.Insert, new Place(["k", "j"]), ["i"]);
       var toRelocate = new Place(["k", "j"]);
       var anotherToRelocate = new Place(["b", "j", "l", "woot"]);
       assert(insert.relocate(toRelocate).isEqualTo(toRelocate));
@@ -57,8 +55,7 @@ describe("ObjectChange", function () {
 
     it("should set the relevant element", function () {
       var insert = new ObjectChange(ChangeType.Insert, new Place(["k"]), "w");
-      var replace = new ObjectChange(ChangeType.Replace, new Place(["j", "l"]), 
-                                     ["i", "f"]);
+      var replace = new ObjectChange(ChangeType.Replace, new Place(["j", "l"]), ["i", "f"]);
       var ctx = {"j": {"l": "i"}};
       assert.deepEqual(insert.mutate(ctx), {"j": {"l": "i"}, "k": "w"});
       assert.deepEqual(replace.mutate(ctx), {"j": {"l": "f"}, "k": "w"});

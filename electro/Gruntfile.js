@@ -11,7 +11,6 @@ module.exports = function (grunt) {
     },
     jshint: {
       options: {
-        '-W004': true, /* variable redeclarations */
         node: true
       },
       test: ["src/**/*.js"]
