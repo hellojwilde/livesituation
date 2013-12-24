@@ -1,5 +1,7 @@
-var Place = require("../../src/core/Place");
+"use strict";
+
 var assert = require("assert");
+var Place = require("../../src/core/Place");
 
 describe("Place", function () {
   describe("constructor", function () {

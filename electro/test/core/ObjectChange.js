@@ -1,3 +1,5 @@
+"use strict";
+
 var assert = require("assert");
 
 var Place = require("../../src/core/Place");
