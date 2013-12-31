@@ -8,27 +8,27 @@ var Change = require("../../src/core/Change");
 var Revision = require("../../src/core/Revision");
 var Changeset = require("../../src/core/Changeset");
 
-var StringChange = Change.StringChange, ChangeType = Change.ChangeType;
+var StringChange = Change.StringChange, Type = Change.Type;
 
 describe("Changeset", function () {
   var one = new Changeset([
-    new StringChange(ChangeType.Insert, new Place(["woot", 3]), ["wat"])
+    new StringChange(Type.Insert, new Place(["woot", 3]), ["wat"])
   ]);
   
   var two = new Changeset([
-    new StringChange(ChangeType.Insert, new Place(["str", 0]), ["ins"]),
-    new StringChange(ChangeType.Insert, new Place(["str", 3]), ["wat"])
+    new StringChange(Type.Insert, new Place(["str", 0]), ["ins"]),
+    new StringChange(Type.Insert, new Place(["str", 3]), ["wat"])
   ]);
   
   var three = new Changeset([
-    new StringChange(ChangeType.Insert, new Place(["str", 0]), ["ins"]),
-    new StringChange(ChangeType.Insert, new Place(["str", 3]), ["wat"]),
-    new StringChange(ChangeType.Insert, new Place(["str", 3]), ["wat"])
+    new StringChange(Type.Insert, new Place(["str", 0]), ["ins"]),
+    new StringChange(Type.Insert, new Place(["str", 3]), ["wat"]),
+    new StringChange(Type.Insert, new Place(["str", 3]), ["wat"])
   ]);
   
   describe("#getChanges", function () {
     it("should return the inputted changes array", function () {
-      var changes = [new StringChange(ChangeType.Insert, new Place(), ["ins"])];
+      var changes = [new StringChange(Type.Insert, new Place(), ["ins"])];
       assert.deepEqual(new Changeset().getChanges(), []);
       assert.deepEqual(new Changeset(changes).getChanges(), changes);
     });
@@ -46,8 +46,8 @@ describe("Changeset", function () {
   describe("#getInversion", function () {
     it("should reverse the order of and invert changes", function () {
       var expected = new Changeset([
-        new StringChange(ChangeType.Remove, new Place(["str", 3]), ["wat"]),
-        new StringChange(ChangeType.Remove, new Place(["str", 0]), ["ins"])
+        new StringChange(Type.Remove, new Place(["str", 3]), ["wat"]),
+        new StringChange(Type.Remove, new Place(["str", 0]), ["ins"])
       ]);
       assert(two.getInversion().isEqualTo(expected));
     });
@@ -60,7 +60,7 @@ describe("Changeset", function () {
 
   describe("#push", function () {
     it("should mutate existing changeset with the new change", function () {
-      var addition = new StringChange(ChangeType.Insert, 
+      var addition = new StringChange(Type.Insert, 
                                       new Place(["str", 3]), ["wat"]);
       var twoClone = _.clone(two);
       assert.equal(twoClone.push(addition), twoClone);

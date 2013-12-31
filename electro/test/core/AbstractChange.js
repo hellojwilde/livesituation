@@ -5,12 +5,12 @@ var _ = require("underscore");
 
 var Place = require("../../src/core/Place");
 var Change = require("../../src/core/Change");
-var ArrayChange = Change.ArrayChange, ChangeType = Change.ChangeType;
+var ArrayChange = Change.ArrayChange, Type = Change.Type;
 
 describe("AbstractChange", function () {
   describe("constructor", function () {
     it("should store all arguments", function () {
-      var type = ChangeType.Insert, place = new Place(), args = "hello";
+      var type = Type.Insert, place = new Place(), args = "hello";
       var change = new ArrayChange(type, place, args);
       assert.equal(change.getType(), type);
       assert.equal(change.getPlace(), place);
@@ -20,7 +20,7 @@ describe("AbstractChange", function () {
   
   describe("isEqualTo", function () {
     it("should compare by value", function () {
-      var first = new ArrayChange(ChangeType.Insert, new Place(), "hi");
+      var first = new ArrayChange(Type.Insert, new Place(), "hi");
       var second = _.clone(first);
       assert.notEqual(first, second);
       assert(first.isEqualTo(second));

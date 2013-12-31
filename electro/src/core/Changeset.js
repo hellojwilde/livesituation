@@ -61,7 +61,17 @@ Changeset.prototype = {
   push: function (change) {
     this._changes.push(change);
     return this;
+  },
+
+  toObject: function() {
+    return _.map(this._changes, function (change) {
+      return change.toObject();
+    });
   }
+};
+
+Changeset.fromObject = function (object) {
+  return _.map(object, Change.fromObject);
 };
 
 module.exports = Changeset;

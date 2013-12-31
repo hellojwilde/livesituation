@@ -5,32 +5,32 @@ var _ = require("underscore");
 
 var Place = require("../../src/core/Place");
 var Change = require("../../src/core/Change");
-var ArrayChange = Change.ArrayChange, ChangeType = Change.ChangeType;
+var ArrayChange = Change.ArrayChange, Type = Change.Type;
 
 describe("ArrayChange", function () {
   describe("#getInverted", function () {
     describe("insert & remove", function () {
       it("invert(insert) -> remove", function () {
-        var change = new ArrayChange(ChangeType.Insert, new Place());
-        assert.equal(change.getInversion().getType(), ChangeType.Remove);
+        var change = new ArrayChange(Type.Insert, new Place());
+        assert.equal(change.getInversion().getType(), Type.Remove);
       });
       
       it("invert(remove) -> insert", function () {
-        var change = new ArrayChange(ChangeType.Remove, new Place());
-        assert.equal(change.getInversion().getType(), ChangeType.Insert);
+        var change = new ArrayChange(Type.Remove, new Place());
+        assert.equal(change.getInversion().getType(), Type.Insert);
       });
     });
 
     describe("replace", function () {
       it("invert(<before, after>) -> <after, before>", function () {
-        var change = new ArrayChange(ChangeType.Replace, null, ["b", "a"]);
+        var change = new ArrayChange(Type.Replace, null, ["b", "a"]);
         assert.deepEqual(change.getInversion().getArgs(), ["a", "b"]);
       });
     });
 
     describe("move", function () {
       it("invert(<...old, new>) -> <...new, old>", function () {
-        var change = new ArrayChange(ChangeType.Move, new Place(["k", 0]), [3]);
+        var change = new ArrayChange(Type.Move, new Place(["k", 0]), [3]);
         var inv = change.getInversion();
         assert.equal(inv.getPlace().getOffset(), _.first(change.getArgs()));
         assert.equal(_.first(inv.getArgs()), change.getPlace().getOffset());

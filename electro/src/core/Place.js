@@ -60,6 +60,10 @@ Place.prototype = {
   toPath: function () { return this._path; },
 };
 
+Place.fromObject = function (object) {
+  return new Place(object);
+};
+
 function Branch(base, branchOffset, branch) {
   this._base = base;
   this._branchOffset = branchOffset;

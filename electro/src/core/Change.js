@@ -3,6 +3,12 @@
 var _ = require("underscore");
 var Place = require("./Place");
 
+var ParentType = {
+  Array: "array",
+  Object: "object",
+  String: "string"
+};
+
 var Type = {
   Insert: "insert",
   Remove: "remove",
@@ -10,13 +16,15 @@ var Type = {
   Move: "move"
 };
 
-function Change(type, place, args) {
+function Change(parentType, type, place, args) {
+  this._parentType = parentType;
   this._type = type;
   this._place = place;
   this._args = args;
 }
 
 Change.prototype = {
+  getParentType: function () { return this._parentType; },
   getType: function () { return this._type; },
   getPlace: function  () { return this._place; },
   getArgs: function () { return this._args; },
@@ -32,11 +40,20 @@ Change.prototype = {
     var ParentTypeChange = otherChange.constructor;
     return new ParentTypeChange(otherChange.getType(), relocated, 
                                 otherChange.getArgs());
+  },
+
+  toObject: function () {
+    return {
+      parentType: this._parentType,
+      type: this._type,
+      place: this._place.toObject(),
+      args: this._args
+    };
   }
 };
 
 function ArrayChange(type, place, args) {
-  Change.call(this, type, place, args);
+  Change.call(this, ParentType.Array, type, place, args);
 }
 
 ArrayChange.prototype = _.extend(Object.create(Change.prototype), {
@@ -142,7 +159,7 @@ ArrayChange.prototype = _.extend(Object.create(Change.prototype), {
 });
 
 function ObjectChange(type, place, args) {
-  Change.call(this, type, place, args);
+  Change.call(this, ParentType.Object, type, place, args);
 }
 
 ObjectChange.prototype = _.extend(Object.create(Change.prototype), {
@@ -193,7 +210,7 @@ ObjectChange.prototype = _.extend(Object.create(Change.prototype), {
 });
 
 function StringChange(type, place, args) {
-  Change.call(this, type, place, args);
+  Change.call(this, ParentType.String, type, place, args);
 }
 
 StringChange.prototype = _.extend(Object.create(Change.prototype), {
@@ -241,8 +258,33 @@ StringChange.prototype = _.extend(Object.create(Change.prototype), {
   }
 });
 
+function getParentTypeChange(parent) {
+  switch (typeof parent) {
+    case "string":
+      return StringChange;
+    case "object":
+      if (parent instanceof Array) return ArrayChange;
+      return ObjectChange;
+  }
+}
+
+function fromObject(object) {
+  var place = Place.fromObject(object.place);
+  switch (object.parentType) {
+    case "array":
+      return new ArrayChange(object.type, place, object.args);
+    case "object":
+      return new ObjectChange(object.type, place, object.args);
+    case "string":
+      return new StringChange(object.type, place, object.args);
+  }
+}
+
 module.exports = {
-  ChangeType: Type,
+  getParentTypeChange: getParentTypeChange,
+  fromObject: fromObject,
+  ParentType: ParentType,
+  Type: Type,
   ArrayChange: ArrayChange,
   ObjectChange: ObjectChange,
   StringChange: StringChange
