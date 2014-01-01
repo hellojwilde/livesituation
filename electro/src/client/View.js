@@ -6,7 +6,6 @@ var Diff = require("diff");
 var Place = require("../core/Place");
 var Change = require("../core/Change");
 var Changeset = require("../core/Changeset");
-
 var Type = Change.Type;
 var StringChange = Change.StringChange;
 
@@ -38,6 +37,23 @@ function getChangesetForData(data, parent, type, place, newValueOrLength){
 
   var TypeChange = Change.getParentTypeChange(parentValue);
   return new Changeset([new TypeChange(type, resolved, args)]);
+}
+
+function getChangesetForStrings(parent, existingValue, newValue) {
+  var diff = Diff.diffChars(existingValue, newValue);
+  var cursor = 0, changes = [];
+  _.each(diff, function (block) {
+    if (block.added || block.removed) {
+      var type = (block.added) ? Type.Insert : Type.Remove;
+      var place = parent.concat(new Place([cursor]));
+      var change = new StringChange(type, place, [block.value]);
+      changes.push(change);
+    }
+
+    if (!block.removed) cursor += block.value.length;
+  });
+
+  return new Changeset(changes);
 }
 
 /**
@@ -76,21 +92,8 @@ View.prototype = {
     var existingValue = resolved.getValueAt(this.getData());
 
     if (typeof newValue == "string" && typeof existingValue == "string") {
-      var diff = Diff.diffChars(existingValue, newValue);
-      var parent = resolved.getParent();
-      var progress = _.reduce(diff, function (progress, block) {
-        if (block.added || block.removed) {
-          var type = (block.added) ? Type.Insert : Type.Remove;
-          var place = parent.concat(new Place(progress.cursor));
-          var change = new StringChange(type, place, [block.value]);
-          progress.changes.push(change);
-        }
-
-        progress.cursor += block.value.length;
-        return progress;
-      }, { cursor: 0, changes: [] });
-
-      this._state.commit(new Changeset(progress.changes));
+      var changeset = getChangesetForStrings(resolved, existingValue, newValue);
+      this._state.commit(changeset);
       return this;
     }
 

@@ -21,7 +21,7 @@
       .get("here").then(function (view) {
         text.value = view.get("value");
         text.addEventListener("input", function () {
-          view.replace("value", text.value);
+          view.set("value", text.value);
         });
       });
 
@@ -29,7 +29,7 @@
       .get("here").then(function (view) {
         viewer.textContent = view.get("value");
         view.on("change", function (change) {
-          viewer.textContent = change.getArgs()[1];
+          viewer.textContent = view.get("value");
         });
       });
   </script>

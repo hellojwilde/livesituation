@@ -47,6 +47,7 @@ MockDocument.prototype = {
       var eventName = adapter == committer ? "ack" : "serverCommit";
       adapter.emit(eventName, changeset);
     });
+    
   },
 
   getSubscribers: function () { 
