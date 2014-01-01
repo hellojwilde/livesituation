@@ -21,14 +21,15 @@ MockDocument.prototype = {
   },
 
   getChangesets: function (start, end) {
-    return this._changesets.slice(start, end);
+    return this._changesets.slice(start || 0, end);
   },
 
-  commit: function (baseSequenceId, changeset) {
+  commit: function (baseSequenceId, changeset, committer) {
     var sequenceId = this.getSequenceId();
 
-    if (baseSequenceId > sequenceId)
-      throw "Invalid base sequence id.";
+    if (baseSequenceId > sequenceId) {
+      throw new Error("Invalid base sequence id.");
+    }
 
     if (baseSequenceId < sequenceId) {
       var changesets = this.getChangesets(baseSequenceId, sequenceId);
@@ -38,18 +39,31 @@ MockDocument.prototype = {
     }
 
     this._changesets.push(changeset);
+    
+    // TODO (jwilde): Ideally rebuild this in a way that doesn't require 
+    //                MockDocument to know that MockAdapter supports the
+    //                EventEmitter interface and can emit events.
+
+    _.each(this._subscribers, function (metadata, adapter) {
+      var eventName = adapter == committer ? "ack" : "serverCommit";
+      adapter.emit(eventName, changeset);
+    });
   },
 
-  getSubscribers: function () {
-    return _.keys(this._subscribers);
+  getSubscribers: function () { 
+    return _.values(this._subscribers); 
   },
 
-  subscribe: function (id) {
-    this._subscribers[id] = true;
+  isSubscribed: function (adapter) { 
+    return _.has(this._subscribers, adapter); 
   },
 
-  isSubscribed: function (id) {
-    return !_.isUndefined(this._subscribers[id]);
+  subscribe: function (adapter, metadata) {
+    this._subscribers[adapter] = metadata;
+  },
+
+  unsubscribe: function (adapter) {
+    delete this._subscribers[adapter];
   }
 };
 

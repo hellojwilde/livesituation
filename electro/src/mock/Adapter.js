@@ -4,73 +4,46 @@ var Q = require("q");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 
+var MockStore = require("./Store");
 var MockDocument = require("./Document");
 
-function MockAdapter (docs) {
-  EventEmitter.call(this);
+function proxyStoreMethod(methodName) {
+  return function () {
+    var method = this._store[methodName];
+    return Q.fapply(_.bind(method, this._store), arguments);
+  };
+}
 
-  this._docs = docs || {};
-  this._clientId = _.uniqueId();
+function proxyDocumentMethod(methodName) {
+  return function (key) {
+    var methodArgs = _.rest(arguments);
+    return Q.fcall(_.bind(function () {
+      var doc = this._store.get(key);
+      return doc[methodName].apply(doc, methodArgs);
+    }, this));
+  };
+}
+
+function MockAdapter (store) {
+  EventEmitter.call(this);
+  this._store = store;
 }
 
 MockAdapter.prototype = {
-  getKeys: function () { 
-    return Q.fcall(_.bind(function () { 
-      return _.keys(this._docs); 
-    }, this)); 
-  },
+  getKeys: proxyStoreMethod("getKeys"),
 
-  getLatest: function (key) { 
-    return Q.fcall(_.bind(function () { 
-      return this._getDoc(key).getLatest(); 
-    }, this)); 
-  },
+  create: proxyStoreMethod("create"),
+  remove: proxyStoreMethod("remove"),
 
-  create: function (key, data) {
-    return Q.fcall(_.bind(function () { 
-      if (!_.isUndefined(this._docs[key]))
-        throw new Error("Document with that key already exists.");
-      this._docs[key] = new MockDocument(data);
-    }, this));
-  },
+  getLatest: proxyDocumentMethod("getLatest"),
+  getSubscribers: proxyDocumentMethod("getSubscribers"),
+  isSubscribed: proxyDocumentMethod("isSubscribed"),
 
+  subscribe: proxyDocumentMethod("subscribe"),
   commit: function (key, baseSequenceId, changeset) {
     return Q.fcall(_.bind(function () {
-      return this._getDoc(key).commit(baseSequenceId, changeset);
+      this._store.get(key).commit(baseSequenceId, changeset, this);
     }, this));
-  },
-
-  remove: function (key) {
-    return Q.fcall(_.bind(function () {
-      this._getDoc(key);
-      delete this._docs[key];
-    }, this));
-  },
-
-  subscribe: function (key) {
-    return Q.fcall(_.bind(function () { 
-      this._getDoc(key).subscribe(this._clientId);
-    }, this));
-  },
-
-  isSubscribed: function (key) {
-    return Q.fcall(_.bind(function () {
-      return this._getDoc(key).isSubscribed(this._clientId);
-    }, this));
-  },
-
-  getSubscribers: function (key) {
-    return Q.fcall(_.bind(function () {
-      return this._getDoc(key).getSubscribers();
-    }, this));
-  },
-
-  _getDoc: function (key) {
-    console.log(key);
-    var doc = this._docs[key];
-    if (_.isUndefined(doc))
-      throw new Error("Document with that key does not exist.");
-    return doc;
   }
 };
 
