@@ -4,14 +4,17 @@ var Q = require("q");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 
-function MockAdapter (initialData) {
+function MockAdapter (initialData, delay) {
   EventEmitter.call(this);
   this._store = initialData;
   this._subs = [];
-  this._commitEventProxy = _.bind(function (changeset, committer) {
-    var event = (committer == this) ? "ack" : "serverCommit";
-    this.emit(event, changeset);
-  }, this);
+  this._commitEventProxy = 
+    _.bind(function (changeset, committer) {
+      _.delay(_.bind(function () {
+        var event = (committer == this) ? "ack" : "serverCommit";
+        this.emit(event, changeset);
+      }, this), delay || 200);
+    }, this);
 }
 
 MockAdapter.prototype = _.extend({
