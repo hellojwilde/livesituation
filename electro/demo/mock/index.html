@@ -28,6 +28,9 @@
     new Electro.Client(new Electro.MockAdapter(store))
       .get("here").then(function (view) {
         viewer.textContent = view.get("value");
+        view.on("change", function (change) {
+          viewer.textContent = change.getArgs()[1];
+        });
       });
   </script>
 </body>

@@ -1,11 +1,44 @@
 "use strict";
 
 var _ = require("underscore");
+var Diff = require("diff");
 
 var Place = require("../core/Place");
 var Change = require("../core/Change");
 var Changeset = require("../core/Changeset");
+
 var Type = Change.Type;
+var StringChange = Change.StringChange;
+
+function getChangesetForData(data, parent, type, place, newValueOrLength){
+  var resolved = parent.concat(Place.normalize(place));
+  var parentValue = resolved.getParent().getValueAt(data);
+  var existingValue = resolved.getValueAt(data);
+
+  if (!_.contains(["object", "string"], typeof parentValue))
+    throw "Can't modify non-collection parent.";
+
+  var args = null;
+  switch (type) {
+    case Type.Insert:
+    case Type.Move:
+      args = [newValueOrLength];
+      break;
+    case Type.Replace:
+      args = [existingValue, newValueOrLength];
+      break;
+    case Type.Remove:
+      if (typeof parentValue == "string") {
+        args = [parentValue.slice(resolved.getOffset(), newValueOrLength)];
+      } else {
+        args = [existingValue];
+      }
+      break;
+  }
+
+  var TypeChange = Change.getParentTypeChange(parentValue);
+  return new Changeset([new TypeChange(type, resolved, args)]);
+}
 
 /**
  * Represents a live view of a document {@link State} inside a {@link Place}.
@@ -14,8 +47,9 @@ var Type = Change.Type;
  * instances manually.
  * 
  * @param {State} state 
- * @param {Place} [parent] Place for the parent of the top-level document to make 
- *                        accessible here. Default is an empty {@link Place}.
+ * @param {Place} [parent] Place for the parent of the top-level document to 
+ *                         make accessible here. Default is an empty 
+ *                         {@link Place}.
  */
 function View(state, parent) {
   this._state = state;
@@ -27,91 +61,55 @@ View.prototype = {
     return this._state.getRevision().getData();
   },
 
-  getSubview: function (parent) {
-    return new View(this._state, this._parent.concat(parent));
+  getView: function (parent) {
+    var resolved = this._parent.concat(Place.normalize(parent));
+    return new View(this._state, resolved);
   },
 
   get: function (place) {
-    if (typeof place == "string") {
-      place = new Place(place.split("."));
-    }
-    return this._parent.concat(place).getValueAt(this.getData());
-  },
-
-  on: function (event, fn) {
-    try {
-    this._state.on(this._parent, event, fn);
-  } catch (e) { console.log(e);}
-  },
-
-  // TODO (jwilde): There's a lot of code replication here. Is there a way that
-  //                that could be reduced and make everything easier to follow?
-  
-  replace: function (place, newValue) {
-    if (typeof place == "string") {
-      place = new Place(place.split("."));
-    }
-
-    var resolved = this._parent.concat(place);
-    var data = this.getData();
-    var parentValue = resolved.getParent().getValueAt(data);
-    var oldValue = resolved.getValueAt(data);
-
-    if (typeof parentValue != "object") {
-     throw "Can't replace on non-object.";
-   }
-
-    var TypeChange = Change.getParentTypeChange(parentValue);
-    var change = new TypeChange(Type.Replace, resolved, [oldValue, newValue]);
-    this._state.commit(new Changeset([change]));
-  },
-
-  insert: function (place, newValue) {
-    var resolved = this._parent.concat(place);
-    var parentValue = resolved.getParent().getValueAt(this.getData());
-
-    var TypeChange = Change.getParentTypeChange(parentValue);
-    var change = new TypeChange(Type.Insert, resolved, [newValue]);
-    this._state.commit(new Changeset(change));
+    var resolved = this._parent.concat(Place.normalize(place));
+    return resolved.getValueAt(this.getData());
   },
 
   set: function (place, newValue) {
-    var resolved = this._parent.concat(place);
-    var data = this.getData();
-    var parentValue = resolved.getParent().getValueAt(data);
-    var oldValue = resolved.getValueAt(data);
+    var resolved = this._parent.concat(Place.normalize(place));
+    var existingValue = resolved.getValueAt(this.getData());
 
-    if (typeof parentValue != "object")
-      throw "Can't set on non-object.";
+    if (typeof newValue == "string" && typeof existingValue == "string") {
+      var diff = Diff.diffChars(existingValue, newValue);
+      var parent = resolved.getParent();
+      var progress = _.reduce(diff, function (progress, block) {
+        if (block.added || block.removed) {
+          var type = (block.added) ? Type.Insert : Type.Remove;
+          var place = parent.concat(new Place(progress.cursor));
+          var change = new StringChange(type, place, [block.value]);
+          progress.changes.push(change);
+        }
 
-    return _.isUndefined(oldValue) ? this.insert(place, newValue)
-                                   : this.replace(place, newValue);
+        progress.cursor += block.value.length;
+        return progress;
+      }, { cursor: 0, changes: [] });
+
+      this._state.commit(new Changeset(progress.changes));
+      return this;
+    }
+
+    var method = _.isUndefined(existingValue) ? this.insert : this.replace;
+    return method.apply(this, arguments);
   },
 
-  remove: function (place, length) {
-    var resolved = this._parent.concat(place);
-    var data = this.getData();
-    var parentValue = resolved.getParent().getValueAt(data);
-    var oldValue = resolved.getValueAt(data);
-
-    if (typeof parentValue == "string")
-      oldValue = parentValue.parent(resolved.getOffset(), length);
-
-    var TypeChange = Change.getParentTypeChange(parentValue);
-    var change = new TypeChange(Type.Remove, resolved, [oldValue]);
-    this._state.commit(new Changeset(change));
-  },
-
-  move: function (place, newIndex) {
-    var resolved = this._parent.concat(place);
-    var parentValue = resolved.getParent().getValueAt(this.getData());
-
-    if (!parentValue instanceof Array)
-      throw "Only works on arrays.";
-
-    var change = new Change.ArrayChange(Type.Move, resolved, [newIndex]);
-    this._state.commit(change);
+  on: function (event, fn) {
+    this._state.on(this._parent, event, fn);
   }
 };
+
+_.each(Type, function (name) {
+  View.prototype[name] = function (place, newValueOrLength) {
+    var args = [this.getData(), this._parent, name, place, newValueOrLength];
+    var changeset = getChangesetForData.apply(null, args);
+    this._state.commit(changeset);
+    return this;
+  };
+});
 
 module.exports = View;

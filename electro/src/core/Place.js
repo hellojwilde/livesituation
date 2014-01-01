@@ -60,10 +60,14 @@ Place.prototype = {
   }
 };
 
-Place.wrap = function (place) {
-  if (typeof place == "string")
+Place.normalize = function (place) {
+  if (typeof place == "string") {
     return new Place(place.split("."));
-  return place;
+  } else if (place instanceof Array) {
+    return new Place(place);
+  } else {
+    return place;
+  }
 };
 
 function Branch(base, branchOffset, branch) {
