@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Electro Mock Adapter Demo</title>
+</head>
+<body>
+  <textarea id="text" style="width:100%;"></textarea>
+  <pre id="viewer"></pre>
+
+  <script src="../../bin/electro.js"></script>
+  <script>
+    var text = document.getElementById("text");
+    var viewer = document.getElementById("viewer");
+
+    var store = new Electro.MockStore({ 
+      "here": new Electro.MockDocument({ "value": "wooot" })
+    });
+
+    new Electro.Client(new Electro.MockAdapter(store))
+      .get("here").then(function (view) {
+        text.value = view.get("value");
+        text.addEventListener("input", function () {
+          view.replace("value", text.value);
+        });
+      });
+
+    new Electro.Client(new Electro.MockAdapter(store))
+      .get("here").then(function (view) {
+        viewer.textContent = view.get("value");
+      });
+  </script>
+</body>
+</html>
