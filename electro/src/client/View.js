@@ -38,6 +38,12 @@ View.prototype = {
     return this._parent.concat(place).getValueAt(this.getData());
   },
 
+  on: function (event, fn) {
+    try {
+    this._state.on(this._parent, event, fn);
+  } catch (e) { console.log(e);}
+  },
+
   // TODO (jwilde): There's a lot of code replication here. Is there a way that
   //                that could be reduced and make everything easier to follow?
   

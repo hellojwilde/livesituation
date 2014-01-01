@@ -2,18 +2,21 @@
 
 var _ = require("underscore");
 
+var PlaceEventEmitter = require("../core/PlaceEventEmitter");
 var MessageType = require("../core/Wire").MessageType;
 var SyncedStrategy = require("./Strategy").SyncedStrategy;
 
 function State(key, adapter, revision) {
+  PlaceEventEmitter.call(this);
   this._strategy = new SyncedStrategy(key, adapter, revision);
+
   if (adapter.on) {
-    adapter.on(MessageType.ServerAck, _.bind(this.handleServerAck, this));
-    adapter.on(MessageType.ServerCommit, _.bind(this.handleServerCommit, this));
+    adapter.on("ack", _.bind(this.handleAck, this));
+    adapter.on("serverCommit", _.bind(this.handleServerCommit, this));
   }
 }
 
-State.prototype = {
+State.prototype = _.extend({
   getKey: function () { return this._strategy.getKey(); },
   getRevision: function () { return this._strategy.getRevision(); },
   
@@ -21,13 +24,16 @@ State.prototype = {
     this._strategy = this._strategy.commitClient(changeset);
   },
 
-  handleServerAck: function () {
-    this._strategy = this._strategy.serverAck();
+  handleAck: function () {
+    this._strategy = this._strategy.ack();
   },
 
   handleServerCommit: function (changeset) {
-    this._strategy = this._strategy.serverCommit(changeset);
+    this._strategy = this._strategy.commitServer(changeset);
+    _.each(changeset.getChanges(), _.bind(function (change) {
+      this.emit(change.getPlace(), "change", change);
+    }, this));
   }
-};
+}, PlaceEventEmitter.prototype);
 
 module.exports = State;
