@@ -6,7 +6,7 @@ var Revision = require("../core/Revision");
 function MockDocument(initialData) {
   this._baseRevision = new Revision(0, initialData || {});
   this._changesets = [];
-  this._subscribers = {};
+  this._subscribers = [];
 }
 
 MockDocument.prototype = {
@@ -26,7 +26,6 @@ MockDocument.prototype = {
 
   commit: function (baseSequenceId, changeset, committer) {
     var sequenceId = this.getSequenceId();
-
     if (baseSequenceId > sequenceId) {
       throw new Error("Invalid base sequence id.");
     }
@@ -44,26 +43,26 @@ MockDocument.prototype = {
     //                MockDocument to know that MockAdapter supports the
     //                EventEmitter interface and can emit events.
 
-    _.each(this._subscribers, function (metadata, adapter) {
+    _.each(this._subscribers, function (adapter) {
       var eventName = adapter == committer ? "ack" : "serverCommit";
       adapter.emit(eventName, changeset);
     });
   },
 
   getSubscribers: function () { 
-    return _.values(this._subscribers); 
+    return this._subscribers; 
   },
 
   isSubscribed: function (adapter) { 
-    return _.has(this._subscribers, adapter); 
+    return _.contains(this._subscribers, adapter); 
   },
 
-  subscribe: function (adapter, metadata) {
-    this._subscribers[adapter] = metadata;
+  subscribe: function (adapter) {
+    this._subscribers.push(adapter);
   },
 
   unsubscribe: function (adapter) {
-    delete this._subscribers[adapter];
+    this._subscribers = _.without(this._subscribers, adapter);
   }
 };
 

@@ -7,6 +7,8 @@ function Place(path) {
 }
 
 Place.prototype = {
+  getPath: function () { return this._path; },
+
   getDepth: function () { return this._path.length; },
   getParent: function () { return new Place(_.initial(this._path)); },
   getOffset: function () { return _.last(this._path); },
@@ -15,7 +17,7 @@ Place.prototype = {
   isRoot: function () { return !this._path.length; },
   
   isEqualTo: function (otherPlace) {
-    return _.isEqual(this._path, otherPlace.toPath());
+    return _.isEqual(this._path, otherPlace.getPath());
   },
   
   isAncestorOf: function (otherPlace) {
@@ -49,19 +51,19 @@ Place.prototype = {
   
   concat: function () {
     return new Place(_.reduce(arguments, function (path, place) {
-      return path.concat(place.toPath());
+      return path.concat(place.getPath());
     }, this._path));
   },
   
   slice: function (from, to) { 
     return new Place(this._path.slice(from, to)); 
-  },
-  
-  toPath: function () { return this._path; },
+  }
 };
 
-Place.fromObject = function (object) {
-  return new Place(object);
+Place.wrap = function (place) {
+  if (typeof place == "string")
+    return new Place(place.split("."));
+  return place;
 };
 
 function Branch(base, branchOffset, branch) {

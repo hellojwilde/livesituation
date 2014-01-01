@@ -40,15 +40,6 @@ Change.prototype = {
     var ParentTypeChange = otherChange.constructor;
     return new ParentTypeChange(otherChange.getType(), relocated, 
                                 otherChange.getArgs());
-  },
-
-  toObject: function () {
-    return {
-      parentType: this._parentType,
-      type: this._type,
-      place: this._place.toObject(),
-      args: this._args
-    };
   }
 };
 
@@ -268,21 +259,8 @@ function getParentTypeChange(parent) {
   }
 }
 
-function fromObject(object) {
-  var place = Place.fromObject(object.place);
-  switch (object.parentType) {
-    case "array":
-      return new ArrayChange(object.type, place, object.args);
-    case "object":
-      return new ObjectChange(object.type, place, object.args);
-    case "string":
-      return new StringChange(object.type, place, object.args);
-  }
-}
-
 module.exports = {
   getParentTypeChange: getParentTypeChange,
-  fromObject: fromObject,
   ParentType: ParentType,
   Type: Type,
   ArrayChange: ArrayChange,

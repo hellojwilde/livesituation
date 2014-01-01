@@ -37,7 +37,8 @@ SyncedStrategy.prototype = _.extend(new Strategy(), {
   },
   
   commitClient: function (changeset) {
-    this._adapter.commit(this._key, changeset);
+    var baseSequenceId = this._revision.getSequenceId();
+    this._adapter.commit(this._key, baseSequenceId, changeset);
     return new AwaitingStrategy(this._key, this._adapter, this._revision, 
                                 changeset);
   }
@@ -99,7 +100,8 @@ AwaitingBufferStrategy.prototype = _.extend(new AwaitingStrategy(), {
   
   ack: function (data) {
     var revision = this.getUnconfirmed().apply(this._revision);
-    this._adapter.commit(this._key, this._buffer);
+    var baseSequenceId = revision.getSequenceId();
+    this._adapter.commit(this._key, baseSequenceId, this._buffer);
     return new AwaitingStrategy(this._key, this._adapter, revision, 
                                 this._buffer);
   },

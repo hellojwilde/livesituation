@@ -6,9 +6,9 @@ var Place = require("../../src/core/Place");
 describe("Place", function () {
   describe("constructor", function () {
     it("path(...) -> ... or []", function () {
-      assert.deepEqual(new Place().toPath(), []);
-      assert.deepEqual(new Place([]).toPath(), []);
-      assert.deepEqual(new Place([1, 2, 3]).toPath(), [1, 2, 3]);
+      assert.deepEqual(new Place().getPath(), []);
+      assert.deepEqual(new Place([]).getPath(), []);
+      assert.deepEqual(new Place([1, 2, 3]).getPath(), [1, 2, 3]);
     });
   });
   
@@ -29,7 +29,7 @@ describe("Place", function () {
   describe("#getParent", function () {
     it("parent([a, b, c]) -> [a, b]", function () {
       var place = new Place(["woot", "hello", "hi"]);
-      assert.deepEqual(place.getParent().toPath(), ["woot", "hello"]);
+      assert.deepEqual(place.getParent().getPath(), ["woot", "hello"]);
     });
 
     it("parent([]) -> []", function () {
@@ -99,7 +99,7 @@ describe("Place", function () {
   });
   
   function assertBranchEmpty(branch, base) {
-    assert.deepEqual(branch.getBase().toPath(), base);
+    assert.deepEqual(branch.getBase().getPath(), base);
     assert(!branch.getBranchOffset());
     assert(!branch.getBranch());
   }
@@ -112,9 +112,9 @@ describe("Place", function () {
     
     it("sibling([a,b],[a,c,d...]) -> branch([a],c,[d...])", function () {
       var branch = new Place([1,2]).getSiblingBranchIn(new Place([1,3,5,6]));
-      assert.deepEqual(branch.getBase().toPath(), [1]);
+      assert.deepEqual(branch.getBase().getPath(), [1]);
       assert.equal(branch.getBranchOffset(), 3);
-      assert.deepEqual(branch.getBranch().toPath(), [5,6]);
+      assert.deepEqual(branch.getBranch().getPath(), [5,6]);
     });
   });
   
@@ -131,9 +131,9 @@ describe("Place", function () {
     
     it("child([a,b],[a,b,d]) -> branch([a],b,[d]", function () {
       var branch = new Place([1,2]).getChildBranchIn(new Place([1,2,3]));
-      assert.deepEqual(branch.getBase().toPath(), [1]);
+      assert.deepEqual(branch.getBase().getPath(), [1]);
       assert.equal(branch.getBranchOffset(), 2);
-      assert.deepEqual(branch.getBranch().toPath(), [3]);
+      assert.deepEqual(branch.getBranch().getPath(), [3]);
     });
   });
   
@@ -177,18 +177,18 @@ describe("Place", function () {
   
   describe("#slice", function () {
     it("slice([a,b,c], 1) == [b,c]", function () {
-      assert.deepEqual(new Place([1,2,3]).slice(1).toPath(), [2,3]);
+      assert.deepEqual(new Place([1,2,3]).slice(1).getPath(), [2,3]);
     });
     
     it("slice([a,b,c], 0, 2) == [a,b]", function () {
-      assert.deepEqual(new Place([1,2,3]).slice(0,2).toPath(), [1,2]);
+      assert.deepEqual(new Place([1,2,3]).slice(0,2).getPath(), [1,2]);
     });
   });
   
-  describe("#toPath", function () {
+  describe("#getPath", function () {
     it("path([...]) -> [...]", function () {
-      assert.deepEqual(new Place([1, 2, 3]).toPath(), [1, 2, 3]);
-      assert.deepEqual(new Place().toPath(), []);
+      assert.deepEqual(new Place([1, 2, 3]).getPath(), [1, 2, 3]);
+      assert.deepEqual(new Place().getPath(), []);
     });
   });
 });
@@ -205,7 +205,7 @@ describe("Branch", function () {
     it("toplace(sibling(..., [...])) -> [...]", function () {
       var dec = new Place([1,3,5,6]);
       var branch = new Place([1,2]).getSiblingBranchIn(dec);
-      assert.deepEqual(branch.toPlace().toPath(), dec.toPath());
+      assert.deepEqual(branch.toPlace().getPath(), dec.getPath());
     });
   });
 });

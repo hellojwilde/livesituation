@@ -24,12 +24,12 @@ function proxyDocumentMethod(methodName) {
   };
 }
 
-function MockAdapter (store) {
+function MockAdapter (initialData) {
   EventEmitter.call(this);
-  this._store = store;
+  this._store = initialData;
 }
 
-MockAdapter.prototype = {
+MockAdapter.prototype = _.extend({
   getKeys: proxyStoreMethod("getKeys"),
 
   create: proxyStoreMethod("create"),
@@ -39,12 +39,17 @@ MockAdapter.prototype = {
   getSubscribers: proxyDocumentMethod("getSubscribers"),
   isSubscribed: proxyDocumentMethod("isSubscribed"),
 
-  subscribe: proxyDocumentMethod("subscribe"),
+  subscribe: function (key) {
+    return Q.fcall(_.bind(function () {
+      this._store.get(key).subscribe(this, { localId: _.uniqueId() });
+    }, this));
+  },
+
   commit: function (key, baseSequenceId, changeset) {
     return Q.fcall(_.bind(function () {
       this._store.get(key).commit(baseSequenceId, changeset, this);
     }, this));
   }
-};
+}, EventEmitter.prototype);
 
 module.exports = MockAdapter;

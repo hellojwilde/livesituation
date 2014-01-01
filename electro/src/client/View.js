@@ -23,64 +23,43 @@ function View(state, parent) {
 }
 
 View.prototype = {
-  /**
-   * Returns the current document state in this fragment, including all 
-   * unconfirmed and buffered commits that may not be on the server yet.
-   * 
-   * @return {Object}
-   */
-  getData: function () { 
-    return this._state.getRevision().getData(); 
+  getData: function () {
+    return this._state.getRevision().getData();
   },
 
-  /**
-   * Returns a new live-subfragment below the given {@link Place}.
-   * 
-   * @param  {Place}    parent
-   * @return {View}
-   */
   getSubview: function (parent) {
     return new View(this._state, this._parent.concat(parent));
   },
-  
-  /**
-   * Returns the value of the data at the given Place.
-   * 
-   * @param  {Place} place
-   * @return {Object}
-   */
+
   get: function (place) {
+    if (typeof place == "string") {
+      place = new Place(place.split("."));
+    }
     return this._parent.concat(place).getValueAt(this.getData());
   },
+
+  // TODO (jwilde): There's a lot of code replication here. Is there a way that
+  //                that could be reduced and make everything easier to follow?
   
-  /**
-   * Commits a change to replace the existing value at the given {@link Place}
-   * with the specified new value. Does not work on strings.
-   * 
-   * @param {Place} place
-   * @param {*}     newValue
-   */
   replace: function (place, newValue) {
+    if (typeof place == "string") {
+      place = new Place(place.split("."));
+    }
+
     var resolved = this._parent.concat(place);
     var data = this.getData();
     var parentValue = resolved.getParent().getValueAt(data);
     var oldValue = resolved.getValueAt(data);
-    
-    if (typeof parentValue != "object")
+
+    if (typeof parentValue != "object") {
      throw "Can't replace on non-object.";
+   }
 
     var TypeChange = Change.getParentTypeChange(parentValue);
     var change = new TypeChange(Type.Replace, resolved, [oldValue, newValue]);
-    this._state.commit(new Changeset(change));
+    this._state.commit(new Changeset([change]));
   },
 
-  /**
-   * Commits a change to insert a value at the given {@link Place} pointing to
-   * a presently undefined value with valid container element.
-   * 
-   * @param {Place} place
-   * @param {*}     newValue
-   */
   insert: function (place, newValue) {
     var resolved = this._parent.concat(place);
     var parentValue = resolved.getParent().getValueAt(this.getData());
@@ -90,13 +69,6 @@ View.prototype = {
     this._state.commit(new Changeset(change));
   },
 
-  /**
-   * Commits a change to set the value at the given {@link Place} to the 
-   * specified new value, using insert and replace as needed.
-   * 
-   * @param {Place} place
-   * @param {*}     newValue
-   */
   set: function (place, newValue) {
     var resolved = this._parent.concat(place);
     var data = this.getData();
@@ -110,13 +82,6 @@ View.prototype = {
                                    : this.replace(place, newValue);
   },
 
-  /**
-   * Commits a change to remove the content at the specified {@link Place}.
-   * 
-   * @param  {Place}  place
-   * @param  {number} [length] If removing inside a string, this specifies the
-   *                           length of text to remove.
-   */
   remove: function (place, length) {
     var resolved = this._parent.concat(place);
     var data = this.getData();
@@ -131,13 +96,6 @@ View.prototype = {
     this._state.commit(new Changeset(change));
   },
 
-  /**
-   * Commits a change to move the array item at the given {@link Place} to the
-   * specified new index in the parent array.
-   * 
-   * @param {Place}  place
-   * @param {number} newIndex
-   */
   move: function (place, newIndex) {
     var resolved = this._parent.concat(place);
     var parentValue = resolved.getParent().getValueAt(this.getData());
@@ -147,10 +105,6 @@ View.prototype = {
 
     var change = new Change.ArrayChange(Type.Move, resolved, [newIndex]);
     this._state.commit(change);
-  },
-
-  commit: function () {
-
   }
 };
 

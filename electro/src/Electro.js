@@ -3,16 +3,16 @@
 var _ = require("underscore");
 
 var Client = require("./client/Client");
+var MockAdapter = require("./mock/Adapter");
+var MockDocument = require("./mock/Document");
+var MockStore = require("./mock/Store");
 
 var Electro = {
-  createClient: function (customOptions) {
-    var options = _.extend({
-      adapter: this.adapters.Node
-    }, customOptions);
-    
-    var AdapterType = options.adapter;
-    return new Client(new AdapterType(options));
-  }
+  Client: Client,
+
+  MockAdapter: MockAdapter,
+  MockDocument: MockDocument,
+  MockStore: MockStore
 };
 
 module.exports = Electro;
