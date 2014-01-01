@@ -2,15 +2,15 @@
 
 var assert = require("assert");
 
-var MockDocument = require("../../src/mock/Document");
-var MockAdapter = require("../../src/mock/Adapter");
-var MockStore = require("../../src/mock/Store");
 var Client = require("../../src/client/Client");
+var MockAdapter = require("../../src/client/adapters/Mock");
+var Document = require("../../src/store/Document");
+var Store = require("../../src/store/Store");
 
 describe("Client", function () {
   describe("#get", function () {
-    var doc = new MockDocument({ woot: "true" });
-    var adapter = new MockAdapter(new MockStore({ "hello": doc }));
+    var doc = new Document({ woot: "true" });
+    var adapter = new MockAdapter(new Store({ "hello": doc }));
     var client = new Client(adapter);
 
     it("should retrieve latest and subscribe", function (done) {

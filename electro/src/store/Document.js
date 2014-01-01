@@ -1,15 +1,18 @@
 "use strict";
 
 var _ = require("underscore");
+var EventEmitter = require("events").EventEmitter;
+
 var Revision = require("../core/Revision");
 
-function MockDocument(initialData) {
+function Document(initialData) {
+  EventEmitter.call(this);
   this._baseRevision = new Revision(0, initialData || {});
   this._changesets = [];
   this._subscribers = [];
 }
 
-MockDocument.prototype = {
+Document.prototype = _.extend({
   getSequenceId: function () {
     return this._changesets.length;
   },
@@ -38,33 +41,17 @@ MockDocument.prototype = {
     }
 
     this._changesets.push(changeset);
+    this.emit("commit", changeset, committer);
     
     // TODO (jwilde): Ideally rebuild this in a way that doesn't require 
-    //                MockDocument to know that MockAdapter supports the
+    //                Document to know that MockAdapter supports the
     //                EventEmitter interface and can emit events.
 
     _.each(this._subscribers, function (adapter) {
       var eventName = adapter == committer ? "ack" : "serverCommit";
       adapter.emit(eventName, changeset);
     });
-    
-  },
-
-  getSubscribers: function () { 
-    return this._subscribers; 
-  },
-
-  isSubscribed: function (adapter) { 
-    return _.contains(this._subscribers, adapter); 
-  },
-
-  subscribe: function (adapter) {
-    this._subscribers.push(adapter);
-  },
-
-  unsubscribe: function (adapter) {
-    this._subscribers = _.without(this._subscribers, adapter);
   }
-};
+}, EventEmitter.prototype);
 
-module.exports = MockDocument;
+module.exports = Document;

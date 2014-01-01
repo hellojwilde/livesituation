@@ -3,16 +3,16 @@
 var _ = require("underscore");
 
 var Client = require("./client/Client");
-var MockAdapter = require("./mock/Adapter");
-var MockDocument = require("./mock/Document");
-var MockStore = require("./mock/Store");
+var MockAdapter = require("./client/adapters/Mock");
+var Document = require("./store/Document");
+var Store = require("./store/Store");
 
 var Electro = {
   Client: Client,
+  Document: Document,
+  Store: Store,
 
-  MockAdapter: MockAdapter,
-  MockDocument: MockDocument,
-  MockStore: MockStore
+  MockAdapter: MockAdapter
 };
 
 module.exports = Electro;

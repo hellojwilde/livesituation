@@ -1,13 +1,13 @@
 "use strict";
 
 var _ = require("underscore");
-var MockDocument = require("./Document");
+var Document = require("./Document");
 
-function MockStore(docs) {
+function Store(docs) {
   this._docs = docs || {};
 }
 
-MockStore.prototype = {
+Store.prototype = {
   getKeys: function () { 
     return _.keys(this._docs); 
   },
@@ -19,7 +19,7 @@ MockStore.prototype = {
   create: function (key, initialData) { 
     if (_.has(this._docs, key)) 
       throw new Error("document already exists.");
-    this._docs[key] = new MockDocument(initialData);
+    this._docs[key] = new Document(initialData);
   },
 
   remove: function (key) { 
@@ -27,4 +27,4 @@ MockStore.prototype = {
   }
 };
 
-module.exports = MockStore;
+module.exports = Store;

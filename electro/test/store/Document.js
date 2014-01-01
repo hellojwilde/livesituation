@@ -5,11 +5,12 @@ var assert = require("assert");
 var Changeset = require("../../src/core/Changeset");
 var Change = require("../../src/core/Change");
 var Place = require("../../src/core/Place");
-var MockDocument = require("../../src/mock/Document");
 
-describe("MockDocument", function () {
+var Document = require("../../src/store/Document");
+
+describe("Document", function () {
   describe("#getSequenceId", function () {
-    var doc = new MockDocument();
+    var doc = new Document();
 
     it("should register 0 as initial sequenceId", function () {
       assert.equal(doc.getSequenceId(), 0);
@@ -21,12 +22,12 @@ describe("MockDocument", function () {
     });
   });
 
-  // TODO (jwilde): #getLatest and #commit are mutually dependent. 
+  // TODO (jwilde): tests for #getLatest and #commit are mutually dependent. 
   //                Is there a way that we can split these out to be saner?
 
   describe("#getLatest", function () {
     var initialData = { woot: true };
-    var doc = new MockDocument(initialData);
+    var doc = new Document(initialData);
 
     it("should include initial data", function () {
       assert.deepEqual(doc.getLatest().getData(), initialData);
@@ -46,7 +47,7 @@ describe("MockDocument", function () {
 
   describe("#commit", function () {
     var initialData = { woot: "this is a string" };
-    var doc = new MockDocument(initialData);
+    var doc = new Document(initialData);
 
     it("should throw on invalid sequenceId", function () {
       var seqId = doc.getSequenceId();

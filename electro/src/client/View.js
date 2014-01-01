@@ -56,17 +56,6 @@ function getChangesetForStrings(parent, existingValue, newValue) {
   return new Changeset(changes);
 }
 
-/**
- * Represents a live view of a document {@link State} inside a {@link Place}.
- * Provides a simple, expressive API for manipulating documents without having
- * to manually modify {@link Change}, {@link Changeset}, and {@link Place}
- * instances manually.
- * 
- * @param {State} state 
- * @param {Place} [parent] Place for the parent of the top-level document to 
- *                         make accessible here. Default is an empty 
- *                         {@link Place}.
- */
 function View(state, parent) {
   this._state = state;
   this._parent = parent || new Place();

@@ -13,8 +13,8 @@
     var text = document.getElementById("text");
     var viewer = document.getElementById("viewer");
 
-    var store = new Electro.MockStore({ 
-      "here": new Electro.MockDocument({ "value": "wooot" })
+    var store = new Electro.Store({ 
+      "here": new Electro.Document({ "value": "wooot" })
     });
 
     new Electro.Client(new Electro.MockAdapter(store))

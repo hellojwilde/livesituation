@@ -1,51 +1,66 @@
 "use strict";
 
 var _ = require("underscore");
+var EventEmitter = require("events").EventEmitter;
 
-var offsetLeaf = { handlers: {}, children: {} };
+function OffsetEventEmitter() {
+  EventEmitter.call(this);
+  this._children = {};
+}
+
+OffsetEventEmitter.prototype = _.extend({
+  getChild: function (offset, shouldCreate) {
+    if (!_.has(this._children, offset) && shouldCreate) {
+      this._children[offset] = new OffsetEventEmitter();
+    }
+    return this._children[offset];
+  }
+}, EventEmitter.prototype);
+
+function getPlaceEmitters(root, place, shouldCreate) {
+  var ctx = root;
+  var emitters = [root];
+  for (var i = 0, len = place.getDepth(); i < len; i++) {
+    ctx = ctx.getChild(place.getOffsetAt(i), shouldCreate);
+    if (_.isUndefined(ctx)) break;
+    emitters.push(ctx);
+  }
+  return emitters;
+}
+
+function getLastPlaceEmitter(root, place) {
+  return _.last(getPlaceEmitters(root, place, true));
+}
 
 function PlaceEventEmitter() {
-  this._events = _.clone(offsetLeaf);
+  this._events = new OffsetEventEmitter();
 }
 
 PlaceEventEmitter.prototype = {
-  on: function (place, event, fn) {
-    var ctx = this._events;
-
-    for (var i = 0, len = place.getDepth(); i < len; i++) {
-      var offset = place.getOffsetAt(i);
-      if (_.isUndefined(ctx.children[offset]))
-        ctx.children[offset] = _.clone(offsetLeaf);
-      ctx = ctx.children[offset];
-    }
-
-    if (_.isUndefined(ctx.handlers[event]))
-      ctx.handlers[event] = [];
-    ctx.handlers[event].push(fn);
-
+  addListener: function (place, event, fn) {
+    getLastPlaceEmitter(this._events, place).on(event, fn);
     return this;
   },
 
+  on: function () { 
+    return this.addListener.apply(this, arguments); 
+  },
+
+  once: function (place, event, fn) {
+    getLastPlaceEmitter(this._events, place).once(event, fn);
+    return this;
+  },
+
+  removeListener: function (place, event, fn) {
+    getLastPlaceEmitter(this._events, place).removeListener(event, fn);
+  },
+
   emit: function (place, event) {
-    var args = _.rest(arguments, 2);
-    var ctx = this._events;
-    var hadListeners = false;
-
-    function emitForLeaf (leaf) {
-      var handlers = leaf.handlers[event];
-      _.each(handlers, function (handler) { handler.apply(null, args); });
-      return handlers > 0;
-    }
-
-    for (var i = 0, len = place.getDepth(); i < len; i++) {
-      hadListeners = hadListeners || emitForLeaf(ctx);
-
-      var offset = place.getOffsetAt(i);
-      if (_.isUndefined(ctx.children[offset])) return hadListeners;
-      ctx = ctx.children[offset];
-    }
-
-    return hadListeners;
+    var args = _.rest(arguments, 1);
+    var emitters = getPlaceEmitters(this._events, place);
+    return _.some(emitters, function (emitter) {
+      return emitter.emit.apply(emitter, args);
+    });
   }
 };
 

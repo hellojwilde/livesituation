@@ -1,13 +1,14 @@
 "use strict";
 
 var assert = require("assert");
-var MockStore = require("../../src/mock/Store");
-var MockAdapter = require("../../src/mock/Adapter");
-var MockDocument = require("../../src/mock/Document");
+
+var MockAdapter = require("../../../src/client/adapters/Mock");
+var Store = require("../../../src/store/Store");
+var Document = require("../../../src/store/Document");
 
 describe("MockAdapter", function () {
-  var doc = new MockDocument();
-  var adapter = new MockAdapter(new MockStore({ "hello": doc }));
+  var doc = new Document();
+  var adapter = new MockAdapter(new Store({ "hello": doc }));
 
   describe("#getKeys", function () {
     it("should return keys in intialization", function (done) {
