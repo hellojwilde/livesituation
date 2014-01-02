@@ -2,7 +2,6 @@
 
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
-
 var Revision = require("../core/Revision");
 
 function Document(initialData) {

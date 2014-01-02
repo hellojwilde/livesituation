@@ -3,35 +3,67 @@
 <head>
   <meta charset="utf-8"/>
   <title>Electro Mock Adapter Demo</title>
+  <style>
+    html, body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    textarea {
+      width: 50%;
+      height: 100%;
+      position: absolute;
+      resize: none;
+    }
+
+    #text-right {
+      right: 0;
+    }
+  </style>
 </head>
 <body>
-  <textarea id="text" style="width:100%;"></textarea>
-  <pre id="viewer"></pre>
+  <textarea id="text-left"></textarea>
+  <textarea id="text-right"></textarea>
 
   <script src="../../bin/electro.js"></script>
   <script>
-    var text = document.getElementById("text");
-    var viewer = document.getElementById("viewer");
-
     var store = new Electro.Store({ 
-      "here": new Electro.Document({ "value": "wooot" })
+      "text": new Electro.Document({ 
+        "val": "Bacon ipsum dolor sit amet hamburger tail brisket, " +
+               "frankfurter pork loin chicken beef ribs pastrami pork chop " +
+               "beef ground round. Chuck kielbasa shoulder frankfurter ham " +
+               "jowl rump pastrami tenderloin pork chop pork. Prosciutto " +
+               "bresaola filet mignon beef ribs jerky shank. Pork pork loin " +
+               "ribeye biltong spare ribs sausage beef. Kielbasa leberkas " + 
+               "tongue, short loin tri-tip tenderloin pork chop meatball " +
+               "jowl. Frankfurter venison pork, salami pork loin filet " +
+               "mignon kevin pork chop flank bresaola. Pig short loin pork " +
+               "biltong bacon beef ribs prosciutto." 
+      })
     });
 
-    new Electro.Client(new Electro.MockAdapter(store))
-      .get("here").then(function (view) {
-        text.value = view.get("value");
-        text.addEventListener("input", function () {
-          view.set("value", text.value);
-        });
-      });
+    function attachTextarea(textarea) {
+      if (typeof textarea == "string") {
+        textarea = document.getElementById(textarea);
+      }
 
-    new Electro.Client(new Electro.MockAdapter(store))
-      .get("here").then(function (view) {
-        viewer.textContent = view.get("value");
-        view.on("change", function (change) {
-          viewer.textContent = view.get("value");
+      new Electro.Client(new Electro.MockAdapter(store))
+        .get("text").then(function (view) {
+          textarea.value = view.get("val");
+          textarea.addEventListener("input", function () {
+            view.set("val", textarea.value);
+          });
+          view.on("change", function (change) {
+            textarea.value = view.get("val");
+          });
         });
-      });
+    }
+
+    attachTextarea("text-left");
+    attachTextarea("text-right");
   </script>
 </body>
 </html>

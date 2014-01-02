@@ -5,21 +5,26 @@ var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 
 var Store = require("../../store/Store");
+var MessageType = require("../../core/Wire").MessageType;
 
 function MockAdapter (initialData, delay) {
   EventEmitter.call(this);
   this._store = initialData || new Store();
   this._subs = [];
+  this._delay = _.isUndefined(delay) ? 200 : delay;
   this._commitEventProxy = 
     _.bind(function (changeset, committer) {
       _.delay(_.bind(function () {
-        var event = (committer == this) ? "ack" : "serverCommit";
+        var event = (committer == this) ? MessageType.Ack 
+                                        : MessageType.CommitServer;
         this.emit(event, changeset);
-      }, this), delay || 200);
+      }, this), this._delay);
     }, this);
 }
 
 MockAdapter.prototype = _.extend({
+  setDelay: function (delay) { this._delay = delay; },
+
   getLatest: function (key) {
     return Q.fcall(_.bind(function () {
       return this._store.get(key).getLatest();

@@ -249,6 +249,17 @@ StringChange.prototype = _.extend(Object.create(Change.prototype), {
   }
 });
 
+function getParentNameTypeChange(parent) {
+  switch (typeof parent) {
+    case ParentType.Array:
+      return ArrayChange;
+    case ParentType.Object:
+      return ObjectChange;
+    case ParentType.String:
+      return StringChange;
+  }
+}
+
 function getParentTypeChange(parent) {
   switch (typeof parent) {
     case "string":
@@ -260,6 +271,7 @@ function getParentTypeChange(parent) {
 }
 
 module.exports = {
+  getParentNameTypeChange: getParentNameTypeChange,
   getParentTypeChange: getParentTypeChange,
   ParentType: ParentType,
   Type: Type,

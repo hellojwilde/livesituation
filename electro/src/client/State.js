@@ -11,8 +11,8 @@ function State(key, adapter, revision) {
   this._strategy = new SyncedStrategy(key, adapter, revision);
 
   if (adapter.on) {
-    adapter.on("ack", _.bind(this.handleAck, this));
-    adapter.on("serverCommit", _.bind(this.handleServerCommit, this));
+    adapter.on(MessageType.Ack, _.bind(this.handleAck, this));
+    adapter.on(MessageType.CommitServer, _.bind(this.handleServerCommit, this));
   }
 }
 
