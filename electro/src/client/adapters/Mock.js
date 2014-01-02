@@ -4,9 +4,11 @@ var Q = require("q");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 
+var Store = require("../../store/Store");
+
 function MockAdapter (initialData, delay) {
   EventEmitter.call(this);
-  this._store = initialData;
+  this._store = initialData || new Store();
   this._subs = [];
   this._commitEventProxy = 
     _.bind(function (changeset, committer) {

@@ -42,15 +42,6 @@ Document.prototype = _.extend({
 
     this._changesets.push(changeset);
     this.emit("commit", changeset, committer);
-    
-    // TODO (jwilde): Ideally rebuild this in a way that doesn't require 
-    //                Document to know that MockAdapter supports the
-    //                EventEmitter interface and can emit events.
-
-    _.each(this._subscribers, function (adapter) {
-      var eventName = adapter == committer ? "ack" : "serverCommit";
-      adapter.emit(eventName, changeset);
-    });
   }
 }, EventEmitter.prototype);
 

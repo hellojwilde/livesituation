@@ -21,8 +21,8 @@ describe("Changeset", function () {
   ]);
   
   var three = new Changeset([
+    new StringChange(Type.Insert, new Place(["woot", 3]), ["wat"]),
     new StringChange(Type.Insert, new Place(["str", 0]), ["ins"]),
-    new StringChange(Type.Insert, new Place(["str", 3]), ["wat"]),
     new StringChange(Type.Insert, new Place(["str", 3]), ["wat"])
   ]);
   
@@ -62,7 +62,10 @@ describe("Changeset", function () {
     it("should mutate existing changeset with the new change", function () {
       var addition = new StringChange(Type.Insert, 
                                       new Place(["str", 3]), ["wat"]);
-      var twoClone = _.clone(two);
+      var twoClone = new Changeset([
+        new StringChange(Type.Insert, new Place(["str", 0]), ["ins"]),
+        new StringChange(Type.Insert, new Place(["str", 3]), ["wat"])
+      ]);
       assert.equal(twoClone.push(addition), twoClone);
       
       var changes = twoClone.getChanges();
@@ -81,7 +84,10 @@ describe("Changeset", function () {
   describe("#apply", function () {
     it("should satisfy d ~= m(m(d, cs), i(cs)) algebra", function () {
       var inverse = new Changeset(three.getInversion().getChanges());
-      var ctx = new Revision(0, {"str": "dsfadsfjdslfjadslkfj"});
+      var ctx = new Revision(0, {
+        "str": "dsfadsfjdslfjadslkfj", 
+        "woot": "dsfadsfjdslfjadslkfj"
+      });
       var invinvctx = inverse.apply(three.apply(ctx));
       assert.deepEqual(invinvctx.getData(), ctx.getData());
     });

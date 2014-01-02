@@ -3,8 +3,8 @@
 var _ = require("underscore");
 
 function Revision(sequenceId, data) {
-  this._sequenceId = sequenceId;
-  this._data = data;
+  this._sequenceId = sequenceId || 0;
+  this._data = data || {};
 }
 
 Revision.prototype = {
@@ -12,7 +12,7 @@ Revision.prototype = {
   getData: function () { return this._data; },
 
   isEqualTo: function (other) { 
-    return _.equal(this._data, other.getData()) &&
+    return _.isEqual(this._data, other.getData()) &&
            this._sequenceId == other.getSequenceId();
   }
 };

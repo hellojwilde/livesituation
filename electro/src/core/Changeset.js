@@ -53,9 +53,9 @@ Changeset.prototype = {
   },
   
   concat: function () {
-    return new Changeset(_.reduce(arguments, function (all, set) {
-      return all.concat(set.getChanges());
-    }, []));
+    return new Changeset(_.reduce(arguments, function (changes, changeset) {
+      return changes.concat(changeset.getChanges());
+    }, this._changes));
   },
   
   push: function (change) {

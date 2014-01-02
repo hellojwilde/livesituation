@@ -16,7 +16,7 @@ Strategy.prototype = {
   isEqualTo: function (other) {
     return this._key == other.getKey() &&
            this._adapter == other.getAdapter() &&
-           this._revision.isEqualTo(other.getRevision);
+           this.getRevision().isEqualTo(other.getRevision());
   }
 };
 
@@ -75,7 +75,7 @@ AwaitingStrategy.prototype = _.extend(new Strategy(), {
   
   commitClient: function (changeset) {
     return new AwaitingBufferStrategy(this._key, this._adapter, this._revision, 
-                              this._unconfirmed, changeset);
+                                      this._unconfirmed, changeset);
   }
 });
 
@@ -122,6 +122,7 @@ AwaitingBufferStrategy.prototype = _.extend(new AwaitingStrategy(), {
 });
 
 module.exports = {
+  Strategy: Strategy,
   SyncedStrategy: SyncedStrategy,
   AwaitingStrategy: AwaitingStrategy,
   AwaitingBufferStrategy: AwaitingBufferStrategy

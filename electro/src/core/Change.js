@@ -263,6 +263,7 @@ module.exports = {
   getParentTypeChange: getParentTypeChange,
   ParentType: ParentType,
   Type: Type,
+  Change: Change,
   ArrayChange: ArrayChange,
   ObjectChange: ObjectChange,
   StringChange: StringChange
