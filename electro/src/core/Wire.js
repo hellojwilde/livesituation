@@ -9,7 +9,8 @@ var Revision = require("./Revision");
 
 var MessageType = {
   Ack: "ack",
-  CommitServer: "commitServer"
+  Commit: "commit",
+  CursorMove: "cursorMove"
 };
 
 function Message(type, body) {
