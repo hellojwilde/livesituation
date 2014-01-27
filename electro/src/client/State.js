@@ -12,7 +12,7 @@ function State(key, adapter, revision) {
 
   if (adapter.on) {
     adapter.on(MessageType.Ack, _.bind(this.handleAck, this));
-    adapter.on(MessageType.CommitServer, _.bind(this.handleServerCommit, this));
+    adapter.on(MessageType.Commit, _.bind(this.handleServerCommit, this));
   }
 }
 
