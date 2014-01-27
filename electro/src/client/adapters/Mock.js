@@ -2,6 +2,7 @@
 
 var Q = require("q");
 var _ = require("underscore");
+var mori = require("mori");
 var EventEmitter = require("events").EventEmitter;
 
 var Store = require("../../store/Store");
@@ -11,7 +12,7 @@ var MessageType = require("../../core/Wire").MessageType;
 function MockAdapter (initialData, delay) {
   EventEmitter.call(this);
   this._store = initialData || new Store();
-  this._subs = [];
+  this._subs = mori.set();
   this._delay = _.isUndefined(delay) ? 200 : delay;
 
   // TODO (jwilde): Is there a way that we can reduce the repetition on these
@@ -28,10 +29,10 @@ function MockAdapter (initialData, delay) {
     }, this);
 
   this._cursorMoveEventProxy = 
-    _.bind(function (newCursor, oldCursor, client) {
+    _.bind(function (client, oldCursor, newCursor) {
       _.delay(_.bind(function () {
         if (client !== this) return;
-        this.emit(MessageType.CursorMove, newCursor, oldCursor, client);
+        this.emit(MessageType.CursorMove, client, oldCursor, newCursor);
       }, this));
     }, this);
 }
@@ -47,30 +48,31 @@ MockAdapter.prototype = _.extend({
 
   getCursor: function (key) {
     return Q.fcall(_.bind(function () {
-      return this._store.get(key).getCursorForClient(this);
+      return this._store.get(key).getCursor(this);
     }, this));
   },
 
   setCursor: function (key, place) {
     return Q.fcall(_.bind(function () {
       var normalized = Place.normalize(place);
-      this._store.get(key).setCursorForClient(this, normalized);
+      this._store.get(key).setCursor(this, normalized);
     }, this));
   },
 
   isSubscribed: function (key) {
     return Q.fcall(_.bind(function () {
-      return _.contains(this._subs, this);
+      return mori.has_key(this._subs, key);
     }, this));
   },
 
   subscribe: function (key) {
     return Q.fcall(_.bind(function () {
-      if (_.contains(this._subs, key))
+      if (_.contains(this._subs, key)) {
         throw new Error("Already subscribed to this document.");
+      }
 
       var doc = this._store.get(key);
-      this._subs.push(key);
+      this._subs = mori.conj(this._subs);
 
       doc.on(MessageType.Commit, this._commitEventProxy);
       doc.on(MessageType.CursorMove, this._cursorMoveEventProxy);
@@ -79,11 +81,12 @@ MockAdapter.prototype = _.extend({
 
   unsubscribe: function (key) {
     return Q.fcall(_.bind(function () {
-      if (!_.contains(this._subs, key))
+      if (!mori.has_key(this._subs, key)) {
         throw new Error("Not subscribed to this document.");
+      }
 
       var doc = this._store.get(key);
-      this._subs = _.without(this._subs, key);
+      this._subs = mori.disj(this._subs, key);
 
       doc.removeListener(MessageType.Commit, this._commitEventProxy);
       doc.removeListener(MessageType.CursorMove, this._cursorMoveEventProxy);

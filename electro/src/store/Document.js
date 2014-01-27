@@ -36,7 +36,7 @@ Document.prototype = _.extend({
   setCursor: function (client, newPlace) {
     var oldPlace = this.getCursor(client);
     this._cursors = mori.assoc(this._cursors, client, newPlace);
-    this.emit(MessageType.CursorMove, oldPlace, newPlace, client);
+    this.emit(MessageType.CursorMove, client, oldPlace, newPlace);
   },
 
   commit: function (baseSequenceId, changeset, committer) {
