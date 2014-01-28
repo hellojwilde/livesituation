@@ -9,37 +9,34 @@ var Store = require("../../store/Store");
 var Place = require("../../core/Place");
 var MessageType = require("../../core/Wire").MessageType;
 
-function MockAdapter (initialData, delay) {
-  EventEmitter.call(this);
-  this._store = initialData || new Store();
-  this._subs = mori.set();
-  this._delay = _.isUndefined(delay) ? 200 : delay;
+function getDelayedMethodProxy(fn, thisArg, delay) {
+  return function () {
+    var args = arguments;
+    setTimeout(function () { fn.apply(thisArg, args); }, delay);
+  };
+}
 
-  // TODO (jwilde): Is there a way that we can reduce the repetition on these
-  //                proxy methods (maybe with some sort of internal 
-  //                createEventProxy method)?
+function MockAdapter (initialMockStore, fakeNetworkDelay) {
+  EventEmitter.call(this);
+  
+  this._store = initialMockStore || new Store();
+  this._subs = mori.set();
+  this._delay = fakeNetworkDelay || 200;
 
   this._commitEventProxy = 
-    _.bind(function (changeset, committer) {
-      _.delay(_.bind(function () {
-        var event = (committer == this) ? MessageType.Ack 
-                                        : MessageType.Commit;
-        this.emit(event, changeset);
-      }, this), this._delay);
-    }, this);
+    getDelayedMethodProxy(function (changeset, committer) {
+      var event = (committer == this) ? MessageType.Ack : MessageType.Commit;
+      this.emit(event, changeset);
+    }, this, this._delay);
 
   this._cursorMoveEventProxy = 
-    _.bind(function (client, oldCursor, newCursor) {
-      _.delay(_.bind(function () {
-        if (client !== this) return;
-        this.emit(MessageType.CursorMove, client, oldCursor, newCursor);
-      }, this));
-    }, this);
+    getDelayedMethodProxy(function (client, oldCursor, newCursor) {
+      if (client !== this) return;
+      this.emit(MessageType.CursorMove, client, oldCursor, newCursor);
+    }, this, this._delay);
 }
 
 MockAdapter.prototype = _.extend({
-  setFakeNetworkDelay: function (delay) { this._delay = delay; },
-
   getLatest: function (key) {
     return Q.fcall(_.bind(function () {
       return this._store.get(key).getLatest();
